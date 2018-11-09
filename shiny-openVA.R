@@ -119,7 +119,9 @@ ui <- fluidPage(
             br(),
             h4("Data Checks"),
             checkboxInput("odkBC", "Are the data from an ODKBriefcase export?", TRUE),
-            conditionalPanel(condition="input.algorithm=='InSilicoVA'"
+            conditionalPanel(condition="input.algorithm=='InSilico2016' | input.algorithm=='InterVA5'",
+                             selectInput(inputId="whoVersion", label="Version of 2016 WHO VA Instrument:",
+                                         choices=c("Version 1.4.1"="v141", "Version 1.5.1"="v151"))
                              ## checkboxInput("isNumeric", "Data already in numeric form?", FALSE)## ,
                              ## checkboxInput("useProbbase", "Use InterVA conditional probability without reestimating?", FALSE),
                              ## checkboxInput("keepProbbase", "Estimating Probbase levels only?", TRUE),
@@ -217,6 +219,7 @@ server <- function(input, output, session){
             return(NULL)
         }
         read.csv(vaData$datapath)
+
     })
     output$fileUploaded <- reactive({
         return(!is.null(getData()))
@@ -224,6 +227,11 @@ server <- function(input, output, session){
     outputOptions(output, "fileUploaded", suspendWhenHidden=FALSE)
 
     selectedAlgorithm <- reactive({
+
+        validate(
+            need(compareVersion("0.9.3", packageDescription("CrossVA")$Version) >= 0,
+                               "Please update the CrossVA package: update.packages()")
+        )
 
         switch(input$algorithm,
                "InSilicoVA"=1, "InterVA"=2, "InSilico2016"=3, "InterVA5"=4)
@@ -649,7 +657,7 @@ server <- function(input, output, session){
             if(input$algorithm=="InSilico2016"){
 
                 if(input$odkBC){
-                    records <- odk2openVA(getData())
+                    records <- odk2openVA(getData(), ifelse(input$whoVersion=="v141", "1.4.1", "1.5.1"))
                 }
 
                 if(!input$odkBC) records <- getData()
@@ -1395,7 +1403,7 @@ server <- function(input, output, session){
             if(input$algorithm=="InterVA5"){
 
                 if(input$odkBC){
-                    records <- odk2openVA(getData())
+                    records <- odk2openVA(getData(), ifelse(input$whoVersion=="v141", "1.4.1", "1.5.1"))
                 }
 
                 if(!input$odkBC) records <- getData()
