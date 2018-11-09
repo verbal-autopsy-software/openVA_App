@@ -17,9 +17,10 @@ install.packages(c("openVA", "shinyjs", "CrossVA"), dependencies = TRUE)
 
 *Notes* 
 
-- The app depends on [**CrossVA** ](https://cran.r-project.org/package=CrossVA) **version 0.9.2**.  To update a previously installed version of
-  this package, run the following command at the **R** prompt (which will ask you to select a CRAN mirror and to confirm the update of
-  each package for which you have administrative privileges):
+- The app depends on [**CrossVA** ](https://cran.r-project.org/package=CrossVA) **version 0.9.3** as well as version 1.2.5
+of the **R** package [InSilicoVA](https://github.com/verbal-autopsy-software/InSilicoVA) package. To update a previously
+installed versions of these packages, run the following command at the **R** prompt (which may ask you to select a CRAN 
+mirror and to confirm the update of each package for which you have administrative privileges):
 
   ```r
   ## update all packages and have R ask about updates for each package:
@@ -28,26 +29,14 @@ install.packages(c("openVA", "shinyjs", "CrossVA"), dependencies = TRUE)
   ## update.packages(ask = FALSE)
   ```
 
-- Version 1.2.3 of the **R** package [InSilicoVA](https://github.com/richardli/InSilicoVA) package is also required.  It is best to first install
-  InSilicoVA using the following command at the **R** prompt (installing openVA with dependencies = TRUE will also do the job):
-  
-  ```r
-  install.packages("InSilicoVA", dependencies = TRUE)
-  ```
-  
-  because it will ensure that all of the dependencies are installed.  Next, download and install 
-  [R Tools](https://cran.r-project.org/bin/windows/Rtools/).  During the installation of R Tools, be sure to select the option 
-  "add rtools to system PATH".  Finally, the following command will install version 1.2.3:
-
-  ```r
-  install.packages(pkgs = "https://github.com/richardli/InSilicoVA/blob/master/InSilicoVA_1.2.3.tar.gz", type = "source", INSTALL_opts = "--no-multiarch")
-  ```
-
 ## Usage
 
-After installing the dependencies, open the file `shiny-openVA.R` in R, select all of the code and execute it.  This repo has an example ODK
-Briefcase exported data set (_odkBriefcaseExport.csv_), which can be used by the Shiny app.  The shiny app will appear
-in your default web browser.  See the [vignette](https://github.com/verbal-autopsy-software/shinyVA/blob/master/shiny-openVA-vignette.pdf) for more details.
+After installing the dependencies, open the file `shiny-openVA.R` in R, select all of the code and execute it.  This repo 
+has two example ODK Briefcase exported data sets (_odkBriefcaseExport.csv_) and (_who151_va_output.csv_), which can be used 
+by the Shiny app.  When running InterVA5 or InSilico2016, users can specify the version of the 2016 WHO VA Questionnaire
+used to collected the data.  The file (_odkBriefcaseExport.csv_) is an example of version 1.4.1 of the 2016
+WHO VA Questionnaire, while the file (_who151_va_output.csv_) is an example of version 1.5.1.  The shiny app will appear 
+in your default web browser.  See the [vignette](https://github.com/verbal-autopsy-software/shinyVA/blob/master/shiny-openVA-vignette.pdf) for more details.  _Note: The vignette needs to be updated, and may not reflect the current state of the shiny app._
 
 
 ## Troubleshooting
