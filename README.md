@@ -73,7 +73,6 @@ InSilicoVA depends on the **R** package rJava.  It is common to run into problem
 ## To Do
 
 - update vignette
-- add 2016 WHO VA instrument version 1.5.1
 - add support for Tariff and WHO VA instrument
 
 ## Licence
