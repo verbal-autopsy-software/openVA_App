@@ -2,7 +2,7 @@
 
 Analyze Verbal Autopsy (VA) data with the InSilicoVA & InterVA algorithms using `shiny-openVA.R`, which  builds a web app with the 
 **R** package [Shiny](https://cran.r-project.org/web/packages/shiny/index.html).  The app can process VA data from the 2016 WHO VA
-instrument (version 1.4.1).  Data from an Open Data Kit (ODK) Briefcase export are also accepted formats for the app.
+instrument (versions 1.4.1 and 1.5.1).  Data from an Open Data Kit (ODK) Briefcase export are also accepted formats for the app.
 
 ## Installation
 
@@ -32,10 +32,10 @@ mirror and to confirm the update of each package for which you have administrati
 ## Usage
 
 After installing the dependencies, open the file `shiny-openVA.R` in R, select all of the code and execute it.  This repo 
-has two example ODK Briefcase exported data sets (_odkBriefcaseExport.csv_) and (_who151_va_output.csv_), which can be used 
+has two example ODK Briefcase exported data sets (_odkBriefcaseExport.csv_) and (_who151_odk_export.csv_), which can be used 
 by the Shiny app.  When running InterVA5 or InSilico2016, users can specify the version of the 2016 WHO VA Questionnaire
 used to collected the data.  The file (_odkBriefcaseExport.csv_) is an example of version 1.4.1 of the 2016
-WHO VA Questionnaire, while the file (_who151_va_output.csv_) is an example of version 1.5.1.  The shiny app will appear 
+WHO VA Questionnaire, while the file (_who151_odk_export.csv_) is an example of version 1.5.1.  The shiny app will appear 
 in your default web browser.  See the [vignette](https://github.com/verbal-autopsy-software/shinyVA/blob/master/shiny-openVA-vignette.pdf) for more details.  _Note: The vignette needs to be updated, and may not reflect the current state of the shiny app._
 
 
