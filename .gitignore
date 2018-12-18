@@ -1,0 +1,17 @@
+.Rprofile
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+InterVA-warnings.txt
+InterVA5-warnings.txt
+InSilico2016-warnings.txt
+plotAdult.pdf
+plotAgeDist.pdf
+plotAll.pdf
+plotFemale.pdf
+plotMale.pdf
+plotNeonate.pdf
+plotChild.pdf
+plotAdult.pdf
+packrat/lib*/
