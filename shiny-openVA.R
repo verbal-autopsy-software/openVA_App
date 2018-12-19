@@ -726,53 +726,60 @@ server <- function(input, output, session){
 
                 if(input$byAll){
                     incProgress(.01, detail=paste("Analysis with all cases"))
-                    rv$fitAll     <- insilico(records, Nsim = isolate(input$simLength), burnin = burn,
-                                              model="InSilicoVA", data.type="WHO2016", warning.write = TRUE)
+                    ##rv$fitAll <- insilico(records, Nsim = isolate(input$simLength), burnin = burn,
+                    ##                      model="InSilicoVA", data.type="WHO2016", warning.write = TRUE)
+                    okRun <- try(rv$fitAll <- insilico(records, Nsim = isolate(input$simLength), burnin = burn,
+                                                       model="InSilicoVA", data.type="WHO2016", warning.write = TRUE),
+                                 silent = FALSE)
                     ## rv$fitAll <- do.call("codeVA", list(data=records, model="InSilicoVA", data.type="WHO2016",
                     ##                                     Nsim=input$simLength, burnin=burn, warning.write=TRUE))
-                    rv$indivCODAll <- indivCOD(rv$fitAll, top=3)
+                    if(!is.null(rv$fitAll)){
+                      rv$indivCODAll <- indivCOD(rv$fitAll, top=3)
 
-                    file.append("InSilicoVA-2016-warnings.txt", "errorlog_insilico.txt")
-                    file.remove("errorlog_insilico.txt")
-                    plotName <- paste("plotAdult-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = "")
-                    if(file.exists(plotName)) file.remove(plotName)
-                    plot(rv$fitAll, top=input$topDeaths); ggsave(plotName, device="pdf")
-                    ## rv$agg.csmf <- get.indiv(rv$fitAll, data=records, CI = 0.95, is.aggregate=TRUE)
-                    ## indivplot(rv$agg.csmf, top = 20, title = "Aggregated COD distribution")
-                    ## ggsave(plotName, device="pdf")
-                    output$downloadPlot1 <- downloadHandler(
-                        filename = plotName,
-                        content = function(file) {
-                            if(!is.null(rv$fitAll)){
-                                file.copy(plotName, file)
-                            }
-                        }
-                    )
-                    output$downloadCOD1 <- downloadHandler(
-                        filename = "individual-causes-All-InSilicoVA-2016.csv",
-                        content = function(file) {
-                            if(!is.null(rv$fitAll)){
-                                write.csv(rv$indivCODAll, file=file, row.names=FALSE)
-                            }
-                        }
-                    )
-                    output$downloadData1 <- downloadHandler(
-                        filename = "resultsAll-InSilicoVA-2016.csv",
-                        content = function(file) {
-                            if(!is.null(rv$fitAll)){
-                                ## summary(rv$fitAll, file=file)
-                                write.csv(print(summary(rv$fitAll, top=input$topDeaths)), file=file)
-                            }
-                        }
-                    )
+                      file.append("InSilicoVA-2016-warnings.txt", "errorlog_insilico.txt")
+                      file.remove("errorlog_insilico.txt")
+                      plotName <- paste("plotAdult-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = "")
+                      if(file.exists(plotName)) file.remove(plotName)
+                      plot(rv$fitAll, top=input$topDeaths); ggsave(plotName, device="pdf")
+                      ## rv$agg.csmf <- get.indiv(rv$fitAll, data=records, CI = 0.95, is.aggregate=TRUE)
+                      ## indivplot(rv$agg.csmf, top = 20, title = "Aggregated COD distribution")
+                      ## ggsave(plotName, device="pdf")
+                      output$downloadPlot1 <- downloadHandler(
+                          filename = plotName,
+                          content = function(file) {
+                              if(!is.null(rv$fitAll)){
+                                  file.copy(plotName, file)
+                              }
+                          }
+                      )
+                      output$downloadCOD1 <- downloadHandler(
+                          filename = "individual-causes-All-InSilicoVA-2016.csv",
+                          content = function(file) {
+                              if(!is.null(rv$fitAll)){
+                                  write.csv(rv$indivCODAll, file=file, row.names=FALSE)
+                              }
+                          }
+                      )
+                      output$downloadData1 <- downloadHandler(
+                          filename = "resultsAll-InSilicoVA-2016.csv",
+                          content = function(file) {
+                              if(!is.null(rv$fitAll)){
+                                  ## summary(rv$fitAll, file=file)
+                                  write.csv(print(summary(rv$fitAll, top=input$topDeaths)), file=file)
+                              }
+                          }
+                      )
+                    }
                 }
 
                 if(input$bySex){
                     incProgress(.15, detail=paste("Analysis with Males"))
                     if(length(male[male])==0) rv$male <- NULL
                     if(length(male[male])>0){
+                      try(
                         rv$fitMale <- insilico(records[male,], Nsim = isolate(input$simLength), burnin = burn,
                                                model="InSilicoVA", data.type="WHO2016", warning.write = TRUE)
+                      )
                         ## try(rv$fitMale <- do.call("codeVA", list(data=records[male,], model="InSilicoVA", data.type="WHO2016",
                         ##                                          Nsim=isolate(input$simLength), burnin=burn, warning.write=TRUE)))
                         if(!is.null(rv$fitMale)){
@@ -1868,6 +1875,9 @@ server <- function(input, output, session){
         ## }
     })
     output$summaryAll <- renderPrint({
+      # validate(
+      #   need(!is.null(rv$fitALL), "No Results")
+      # )
         algorithm <- selectedAlgorithm()
         if(!is.null(rv$fitAll)){
             if(algorithm==1 & is.null(rv$fitAll$HIV)){
@@ -1892,7 +1902,10 @@ server <- function(input, output, session){
         ## }
     })
     output$plotAll <- renderPlot({
-        if(!is.null(rv$fitAll)){
+#      validate(
+#        need(!is.null(rv$fitALL), "No Results")
+#      )
+              if(!is.null(rv$fitAll)){
             if(input$algorithm=="InterVA4" & !is.null(rv$fitAll$HIV)){
                 ## CSMF(rv$fitAll, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001)
                 CSMF2(rv$fitAll, top=input$topDeaths)
@@ -1922,6 +1935,7 @@ server <- function(input, output, session){
         }
     })
     output$summaryMale <- renderPrint({
+      
         algorithm <- selectedAlgorithm()
         if(!is.null(rv$fitMale)){
             if(algorithm==1 & is.null(rv$fitMale$HIV)){
