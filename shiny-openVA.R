@@ -657,7 +657,8 @@ server <- function(input, output, session){
                 if(input$odkBC){
                     hasAgeNeonateHours <- grep("age_neonate_hours", tolower(names(getData())))
                     whoVersion <- ifelse(length(hasAgeNeonateHours) == 1, "1.4.1", "1.5.1")
-                    records <- odk2openVA(getData(), whoVersion)
+                    if (packageVersion("CrossVA") > "0.9.4") records <- odk2openVA(getData())
+                    if (packageVersion("CrossVA") <= "0.9.4") records <- odk2openVA(getData(), whoVersion)
                     records$ID <- getData()$meta.instanceID
                 }
 
@@ -1425,7 +1426,8 @@ server <- function(input, output, session){
                 if(input$odkBC){
                     hasAgeNeonateHours <- grep("age_neonate_hours", tolower(names(getData())))
                     whoVersion <- ifelse(length(hasAgeNeonateHours) == 1, "1.4.1", "1.5.1")
-                    records <- odk2openVA(getData(), whoVersion)
+                    if (packageVersion("CrossVA") > "0.9.4") records <- odk2openVA(getData())
+                    if (packageVersion("CrossVA") <= "0.9.4") records <- odk2openVA(getData(), whoVersion)
                     records$ID <- getData()$meta.instanceID
                 }
 
