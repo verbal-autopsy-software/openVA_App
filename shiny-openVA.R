@@ -82,9 +82,9 @@ ui <- fluidPage(
             checkboxInput("byAge", "Include age-specific results (infant, child, adult)?", FALSE),
             sliderInput(inputId="topDeaths", label="Number of causes to include in summaries/plots", min=5, max=20, value=10),
             selectInput(inputId="algorithm", label="Select Algorithm:",
-                        choices=c("InSilicoVA_2012" = "InSilicoVA_2012", 
+                        choices=c(#"InSilicoVA_2012" = "InSilicoVA_2012", 
                                   "InSilicoVA_2016" = "InSilicoVA_2016", 
-                                  "InterVA4" = "InterVA4", 
+                                  #"InterVA4" = "InterVA4", 
                                   "InterVA5" = "InterVA5"),
                         width="150px"),
             conditionalPanel(condition="input.algorithm=='InSilicoVA_2012'",
@@ -673,7 +673,7 @@ server <- function(input, output, session){
                 child  <- rep(FALSE, length(records$i022f))
                 child[records$i022f=="y"] <- TRUE
                 child[records$i022e=="y"] <- TRUE
-                child[records$i022d=="Y"] <- TRUE
+                child[records$i022d=="y"] <- TRUE
                 adult <- rep(FALSE, length(records$i022a))
                 adult[records$i022a=="y"] <- TRUE
                 adult[records$i022b=="y"] <- TRUE
@@ -1501,7 +1501,7 @@ server <- function(input, output, session){
                     plotName <- paste("plotAll-InterVA5-", Sys.Date(), ".pdf", sep = "")
                     if(file.exists(plotName)) file.remove(plotName)
                     ## pdf(plotName);CSMF(rv$fitAll, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001);dev.off()
-                    pdf(plotName);CSMF5(rv$fitAll, top.plot=input$topDeaths, InterVA.rule = TRUE);dev.off()
+                    pdf(plotName);CSMF5(rv$fitAll, top.plot=input$topDeaths, InterVA.rule = TRUE, min.prob=.00001);dev.off()
                     output$downloadPlot1 <- downloadHandler(
                         filename = plotName,
                         content = function(file) {
@@ -1549,7 +1549,7 @@ server <- function(input, output, session){
                         plotName <- paste("plotMale-InterVA5-", Sys.Date(), ".pdf", sep = "")
                         if(file.exists(plotName)) file.remove(plotName)
                         ## pdf(plotName);CSMF(rv$fitMale, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001);dev.off()
-                        pdf(plotName);CSMF5(rv$fitMale, top.plot=input$topDeaths, InterVA.rule = TRUE);dev.off()
+                        pdf(plotName);CSMF5(rv$fitMale, top.plot=input$topDeaths, InterVA.rule = TRUE, min.prob=.00001);dev.off()
                         output$downloadPlot2 <- downloadHandler(
                             filename = plotName,
                             content = function(file) {
@@ -1598,7 +1598,7 @@ server <- function(input, output, session){
                         plotName <- paste("plotFemale-InterVA5-", Sys.Date(), ".pdf", sep = "")
                         if(file.exists(plotName)) file.remove(plotName)
                         ## pdf(plotName);CSMF(rv$fitFemale, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001);dev.off()
-                        pdf(plotName);CSMF5(rv$fitFemale, top.plot=input$topDeaths, InterVA.rule = TRUE);dev.off()
+                        pdf(plotName);CSMF5(rv$fitFemale, top.plot=input$topDeaths, InterVA.rule = TRUE, min.prob=.00001);dev.off()
                         output$downloadPlot3 <- downloadHandler(
                             filename = plotName,
                             content = function(file) {
@@ -1649,7 +1649,7 @@ server <- function(input, output, session){
                         plotName <- paste("plotNeonate-InterVA5-", Sys.Date(), ".pdf", sep = "")
                         if(file.exists(plotName)) file.remove(plotName)
                         ## pdf(plotName);CSMF(rv$fitNeonate, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001);dev.off()
-                        pdf(plotName);CSMF5(rv$fitNeonate, top.plot=input$topDeaths, InterVA.rule = TRUE);dev.off()
+                        pdf(plotName);CSMF5(rv$fitNeonate, top.plot=input$topDeaths, InterVA.rule = TRUE, min.prob=.00001);dev.off()
                         output$downloadPlot4 <- downloadHandler(
                             filename = plotName,
                             content = function(file) {
@@ -1698,7 +1698,7 @@ server <- function(input, output, session){
                         plotName <- paste("plotChild-InterVA5-", Sys.Date(), ".pdf", sep = "")
                         if(file.exists(plotName)) file.remove(plotName)
                         ## pdf(plotName);CSMF(rv$fitChild, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001);dev.off()
-                        pdf(plotName);CSMF5(rv$fitChild, top.plot=input$topDeaths, InterVA.rule = TRUE);dev.off()
+                        pdf(plotName);CSMF5(rv$fitChild, top.plot=input$topDeaths, InterVA.rule = TRUE, min.prob=.00001);dev.off()
                         output$downloadPlot5 <- downloadHandler(
                             filename = plotName,
                             content = function(file) {
@@ -1747,7 +1747,7 @@ server <- function(input, output, session){
                         plotName <- paste("plotAdult-InterVA5-", Sys.Date(), ".pdf", sep = "")
                         if(file.exists(plotName)) file.remove(plotName)
                         ## pdf(plotName); CSMF(rv$fitAdult, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001); dev.off()
-                        pdf(plotName);CSMF5(rv$fitAdult, top.plot=input$topDeaths, InterVA.rule = TRUE);dev.off()
+                        pdf(plotName);CSMF5(rv$fitAdult, top.plot=input$topDeaths, InterVA.rule = TRUE, min.prob=.00001);dev.off()
                         output$downloadPlot6 <- downloadHandler(
                             filename = plotName,
                             content = function(file) {
@@ -1907,14 +1907,14 @@ server <- function(input, output, session){
 #      validate(
 #        need(!is.null(rv$fitALL), "No Results")
 #      )
-              if(!is.null(rv$fitAll)){
+        if(!is.null(rv$fitAll)){
             if(input$algorithm=="InterVA4" & !is.null(rv$fitAll$HIV)){
                 ## CSMF(rv$fitAll, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001)
                 CSMF2(rv$fitAll, top=input$topDeaths)
             }
             if(input$algorithm=="InterVA5" & !is.null(rv$fitAll$HIV)){
                 ## CSMF(rv$fitAll, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001)
-                CSMF5(rv$fitAll, top.plot=input$topDeaths, InterVA.rule = TRUE)
+                CSMF5(rv$fitAll, top.plot=input$topDeaths, InterVA.rule = TRUE, min.prob=.00001)
             }
             if(input$algorithm=="InSilicoVA_2012" & is.null(rv$fitAll$HIV)){
                 plot(rv$fitAll, top=input$topDeaths)
@@ -1975,7 +1975,7 @@ server <- function(input, output, session){
             }
             if(input$algorithm=="InterVA5" & !is.null(rv$fitMale$HIV)){
                 ## CSMF(rv$fitMale, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001)
-                CSMF5(rv$fitMale, top.plot=input$topDeaths, InterVA.rule = TRUE)
+                CSMF5(rv$fitMale, top.plot=input$topDeaths, InterVA.rule = TRUE, min.prob=.00001)
             }
             if(input$algorithm=="InSilicoVA_2012" & is.null(rv$fitMale$HIV)){
                 ## indivplot(rv$agg.csmfMale, top=20, title="Aggregated COD distribution")
@@ -2038,7 +2038,7 @@ server <- function(input, output, session){
             }
             if(input$algorithm=="InterVA5" & !is.null(rv$fitFemale$HIV)){
                 ## CSMF(rv$fitFemale, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001)
-                CSMF5(rv$fitFemale, top.plot=input$topDeaths, InterVA.rule = TRUE)
+                CSMF5(rv$fitFemale, top.plot=input$topDeaths, InterVA.rule = TRUE, min.prob=.00001)
             }
             if(input$algorithm=="InSilicoVA_2012" & is.null(rv$fitFemale$HIV)){
                 ## indivplot(rv$agg.csmfFemale, top=20, title="Aggregated COD distribution")
@@ -2101,7 +2101,7 @@ server <- function(input, output, session){
             }
             if(input$algorithm=="InterVA5" & !is.null(rv$fitNeonate$HIV)){
                 ## CSMF(rv$fitNeonate, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001)
-                CSMF5(rv$fitNeonate, top.plot=input$topDeaths, InterVA.rule = TRUE)
+                CSMF5(rv$fitNeonate,, top.plot=input$topDeaths, InterVA.rule = TRUE, min.prob=.00001)
             }
             if(input$algorithm=="InSilicoVA_2012" & is.null(rv$fitNeonate$HIV)){
                 ## indivplot(rv$agg.csmfNeonate, top=20, title="Aggregated COD distribution")
@@ -2164,7 +2164,7 @@ server <- function(input, output, session){
             }
             if(input$algorithm=="InterVA5" & !is.null(rv$fitNeonate$HIV)){
                 ## CSMF(rv$fitChild, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001)
-                CSMF5(rv$fitChild, top.plot=input$topDeaths, InterVA.rule = TRUE)
+                CSMF5(rv$fitChild, top.plot=input$topDeaths, InterVA.rule = TRUE, min.prob=.00001)
             }
             if(input$algorithm=="InSilicoVA_2012" & is.null(rv$fitNeonate$HIV)){
                 ## indivplot(rv$agg.csmfChild, top=20, title="Aggregated COD distribution")
@@ -2227,7 +2227,7 @@ server <- function(input, output, session){
             }
             if(input$algorithm=="InterVA5" & !is.null(rv$fitAdult$HIV)){
                 ## CSMF(rv$fitAdult, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001)
-                CSMF5(rv$fitAdult, top.plot=input$topDeaths, InterVA.rule = TRUE)
+                CSMF5(rv$fitAdult, top.plot=input$topDeaths, InterVA.rule = TRUE, min.prob=.00001)
             }
             if(input$algorithm=="InSilicoVA_2012" & is.null(rv$fitAdult$HIV)){
                 ## indivplot(rv$agg.csmfAdult, top=20, title="Aggregated COD distribution")

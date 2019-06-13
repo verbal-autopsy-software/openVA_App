@@ -16,3 +16,7 @@ plotNeonate*.pdf
 plotChild*.pdf
 plotAdult*.pdf
 packrat/lib*/
+VA5_result.csv
+VA_result.csv
+errorlogV5.txt
+shinyVA.Rproj
