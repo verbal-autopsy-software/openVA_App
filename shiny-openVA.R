@@ -739,14 +739,14 @@ server <- function(input, output, session){
 
                       file.append("InSilicoVA-2016-warnings.txt", "errorlog_insilico.txt")
                       file.remove("errorlog_insilico.txt")
-                      plotName <- paste("plotAdult-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = "")
+                      plotName <- paste("plotAll-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = "")
                       if(file.exists(plotName)) file.remove(plotName)
                       plot(rv$fitAll, top=input$topDeaths); ggsave(plotName, device="pdf")
                       ## rv$agg.csmf <- get.indiv(rv$fitAll, data=records, CI = 0.95, is.aggregate=TRUE)
                       ## indivplot(rv$agg.csmf, top = 20, title = "Aggregated COD distribution")
                       ## ggsave(plotName, device="pdf")
                       output$downloadPlot1 <- downloadHandler(
-                          filename = plotName,
+                          filename = paste("plotAll-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = ""),
                           content = function(file) {
                               if(!is.null(rv$fitAll)){
                                   file.copy(plotName, file)
@@ -797,7 +797,7 @@ server <- function(input, output, session){
                             ## indivplot(rv$agg.csmfMale, top = 20, title = "Aggregated COD distribution")
                             ## ggsave(plotName, device="pdf")
                             output$downloadPlot2 <- downloadHandler(
-                                filename = plotName,
+                                filename = paste("plotMale-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = ""),
                                 content = function(file) {
                                     if(!is.null(rv$fitMale)){
                                         file.copy(plotName, file)
@@ -848,7 +848,7 @@ server <- function(input, output, session){
                             ## indivplot(rv$agg.csmfFemale, top = 20, title = "Aggregated COD distribution")
                             ## ggsave(plotName, device="pdf")
                             output$downloadPlot3 <- downloadHandler(
-                                filename = plotName,
+                                filename = paste("plotFemale-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = ""),
                                 content = function(file) {
                                     if(!is.null(rv$fitFemale)){
                                         file.copy(plotName, file)
@@ -898,7 +898,7 @@ server <- function(input, output, session){
                             ## indivplot(rv$agg.csmfNeonate, top = 20, title = "Aggregated COD distribution")
                             ## ggsave(plotName, device="pdf")
                             output$downloadPlot4 <- downloadHandler(
-                                filename = plotName,
+                                filename = paste("plotNeonate-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = ""),
                                 content = function(file) {
                                     if(!is.null(rv$fitNeonate)){
                                         file.copy(plotName, file)
@@ -947,7 +947,7 @@ server <- function(input, output, session){
                             ## indivplot(rv$agg.csmfChild, top = 20, title = "Aggregated COD distribution")
                             ## ggsave(plotName, device="pdf")
                             output$downloadPlot5 <- downloadHandler(
-                                filename = plotName,
+                                filename = paste("plotChild-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = ""),
                                 content = function(file) {
                                     if(!is.null(rv$fitChild)){
                                         file.copy(plotName, file)
@@ -997,7 +997,7 @@ server <- function(input, output, session){
                             ## indivplot(rv$agg.csmfAdult, top = 20, title = "Aggregated COD distribution")
                             ## ggsave(plotName, device="pdf")
                             output$downloadPlot6 <- downloadHandler(
-                                filename = plotName,
+                                filename = paste("plotAdult-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = ""),
                                 content = function(file) {
                                     if(!is.null(rv$fitAdult)){
                                         file.copy(plotName, file)
@@ -1503,7 +1503,8 @@ server <- function(input, output, session){
                     ## pdf(plotName);CSMF(rv$fitAll, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001);dev.off()
                     pdf(plotName);CSMF5(rv$fitAll, top.plot=input$topDeaths, InterVA.rule = TRUE, min.prob=.00001);dev.off()
                     output$downloadPlot1 <- downloadHandler(
-                        filename = plotName,
+                        #filename = plotName,
+                        filename = paste("plotAll-InterVA5-", Sys.Date(), ".pdf", sep = ""),
                         content = function(file) {
                             if(!is.null(rv$fitAll)){
                                 file.copy(plotName, file)
@@ -1551,7 +1552,8 @@ server <- function(input, output, session){
                         ## pdf(plotName);CSMF(rv$fitMale, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001);dev.off()
                         pdf(plotName);CSMF5(rv$fitMale, top.plot=input$topDeaths, InterVA.rule = TRUE, min.prob=.00001);dev.off()
                         output$downloadPlot2 <- downloadHandler(
-                            filename = plotName,
+                            #filename = plotName,
+                            filename = paste("plotMale-InterVA5-", Sys.Date(), ".pdf", sep = ""),
                             content = function(file) {
                                 if(!is.null(rv$fitMale)){
                                     file.copy(plotName, file)
@@ -1600,7 +1602,7 @@ server <- function(input, output, session){
                         ## pdf(plotName);CSMF(rv$fitFemale, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001);dev.off()
                         pdf(plotName);CSMF5(rv$fitFemale, top.plot=input$topDeaths, InterVA.rule = TRUE, min.prob=.00001);dev.off()
                         output$downloadPlot3 <- downloadHandler(
-                            filename = plotName,
+                            filename = paste("plotFemale-InterVA5-", Sys.Date(), ".pdf", sep = ""),
                             content = function(file) {
                                 if(!is.null(rv$fitFemale)){
                                     file.copy(plotName, file)
@@ -1651,7 +1653,7 @@ server <- function(input, output, session){
                         ## pdf(plotName);CSMF(rv$fitNeonate, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001);dev.off()
                         pdf(plotName);CSMF5(rv$fitNeonate, top.plot=input$topDeaths, InterVA.rule = TRUE, min.prob=.00001);dev.off()
                         output$downloadPlot4 <- downloadHandler(
-                            filename = plotName,
+                            filename = paste("plotNeonate-InterVA5-", Sys.Date(), ".pdf", sep = ""),
                             content = function(file) {
                                 if(!is.null(rv$fitNeonate)){
                                     file.copy(plotName, file)
@@ -1700,7 +1702,7 @@ server <- function(input, output, session){
                         ## pdf(plotName);CSMF(rv$fitChild, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001);dev.off()
                         pdf(plotName);CSMF5(rv$fitChild, top.plot=input$topDeaths, InterVA.rule = TRUE, min.prob=.00001);dev.off()
                         output$downloadPlot5 <- downloadHandler(
-                            filename = plotName,
+                            filename = paste("plotChild-InterVA5-", Sys.Date(), ".pdf", sep = ""),
                             content = function(file) {
                                 if(!is.null(rv$fitChild)){
                                     file.copy(plotName, file)
@@ -1749,7 +1751,7 @@ server <- function(input, output, session){
                         ## pdf(plotName); CSMF(rv$fitAdult, top.plot=input$topDeaths, InterVA.rule=TRUE, min.prob=.001); dev.off()
                         pdf(plotName);CSMF5(rv$fitAdult, top.plot=input$topDeaths, InterVA.rule = TRUE, min.prob=.00001);dev.off()
                         output$downloadPlot6 <- downloadHandler(
-                            filename = plotName,
+                            filename = paste("plotAdult-InterVA5-", Sys.Date(), ".pdf", sep = ""),
                             content = function(file) {
                                 if(!is.null(rv$fitAdult)){
                                     file.copy(plotName, file)
