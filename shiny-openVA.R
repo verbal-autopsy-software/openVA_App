@@ -739,9 +739,9 @@ server <- function(input, output, session){
 
                       file.append("InSilicoVA-2016-warnings.txt", "errorlog_insilico.txt")
                       file.remove("errorlog_insilico.txt")
-                      plotName <- paste("plotAll-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = "")
-                      if(file.exists(plotName)) file.remove(plotName)
-                      plot(rv$fitAll, top=input$topDeaths); ggsave(plotName, device="pdf")
+                      plotNameAll <- paste("plotAll-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = "")
+                      if(file.exists(plotNameAll)) file.remove(plotNameAll)
+                      plot(rv$fitAll, top=input$topDeaths); ggsave(plotNameAll, device="pdf")
                       ## rv$agg.csmf <- get.indiv(rv$fitAll, data=records, CI = 0.95, is.aggregate=TRUE)
                       ## indivplot(rv$agg.csmf, top = 20, title = "Aggregated COD distribution")
                       ## ggsave(plotName, device="pdf")
@@ -749,7 +749,7 @@ server <- function(input, output, session){
                           filename = paste("plotAll-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = ""),
                           content = function(file) {
                               if(!is.null(rv$fitAll)){
-                                  file.copy(plotName, file)
+                                  file.copy(plotNameAll, file)
                               }
                           }
                       )
@@ -790,9 +790,9 @@ server <- function(input, output, session){
                             cat("\n", "Warnings and Errors from Analysis for Males", date(), "\n", file="InSilicoVA-2016-warnings.txt", append=TRUE)
                             file.append("InSilicoVA-2016-warnings.txt", "errorlog_insilico.txt")
                             file.remove("errorlog_insilico.txt")
-                            plotName <- paste("plotMale-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = "")
-                            if(file.exists(plotName)) file.remove(plotName)
-                            plot(rv$fitMale, top=input$topDeaths); ggsave(plotName, device="pdf")
+                            plotNameMale <- paste("plotMale-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = "")
+                            if(file.exists(plotNameMale)) file.remove(plotNameMale)
+                            plot(rv$fitMale, top=input$topDeaths); ggsave(plotNameMale, device="pdf")
                             ## rv$agg.csmfMale <- get.indiv(rv$fitMale, data=records[male,], CI = 0.95, is.aggregate=TRUE)
                             ## indivplot(rv$agg.csmfMale, top = 20, title = "Aggregated COD distribution")
                             ## ggsave(plotName, device="pdf")
@@ -800,7 +800,7 @@ server <- function(input, output, session){
                                 filename = paste("plotMale-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = ""),
                                 content = function(file) {
                                     if(!is.null(rv$fitMale)){
-                                        file.copy(plotName, file)
+                                        file.copy(plotNameMale, file)
                                     }
                                 }
                             )
@@ -841,9 +841,9 @@ server <- function(input, output, session){
                             file.append("InSilicoVA-2016-warnings.txt", "errorlog_insilico.txt")
                             file.remove("errorlog_insilico.txt")
 
-                            plotName <- paste("plotFemale-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = "")
-                            if(file.exists(plotName)) file.remove(plotName)
-                            plot(rv$fitFemale, top=input$topDeaths); ggsave(plotName, device="pdf")
+                            plotNameFemale <- paste("plotFemale-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = "")
+                            if(file.exists(plotNameFemale)) file.remove(plotNameFemale)
+                            plot(rv$fitFemale, top=input$topDeaths); ggsave(plotNameFemale, device="pdf")
                             ## rv$agg.csmfFemale <- get.indiv(rv$fitFemale, data=records[female,], CI = 0.95, is.aggregate=TRUE)
                             ## indivplot(rv$agg.csmfFemale, top = 20, title = "Aggregated COD distribution")
                             ## ggsave(plotName, device="pdf")
@@ -851,7 +851,7 @@ server <- function(input, output, session){
                                 filename = paste("plotFemale-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = ""),
                                 content = function(file) {
                                     if(!is.null(rv$fitFemale)){
-                                        file.copy(plotName, file)
+                                        file.copy(plotNameFemale, file)
                                     }
                                 }
                             )
@@ -891,9 +891,9 @@ server <- function(input, output, session){
                             cat("\n", "Warnings and Errors from Analysis for Neonates", date(), "\n", file="InSilicoVA-2016-warnings.txt", append=TRUE)
                             file.append("InSilicoVA-2016-warnings.txt", "errorlog_insilico.txt")
                             file.remove("errorlog_insilico.txt")
-                            plotName <- paste("plotNeonate-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = "")
-                            if(file.exists(plotName)) file.remove(plotName)
-                            plot(rv$fitNeonate, top=input$topDeaths); ggsave(plotName, device="pdf")
+                            plotNameNeonate <- paste("plotNeonate-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = "")
+                            if(file.exists(plotNameNeonate)) file.remove(plotNameNeonate)
+                            plot(rv$fitNeonate, top=input$topDeaths); ggsave(plotNameNeonate, device="pdf")
                             ## rv$agg.csmfNeonate <- get.indiv(rv$fitNeonate, data=records[neonate,], CI = 0.95, is.aggregate=TRUE)
                             ## indivplot(rv$agg.csmfNeonate, top = 20, title = "Aggregated COD distribution")
                             ## ggsave(plotName, device="pdf")
@@ -901,7 +901,7 @@ server <- function(input, output, session){
                                 filename = paste("plotNeonate-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = ""),
                                 content = function(file) {
                                     if(!is.null(rv$fitNeonate)){
-                                        file.copy(plotName, file)
+                                        file.copy(plotNameNeonate, file)
                                     }
                                 }
                             )
@@ -940,9 +940,9 @@ server <- function(input, output, session){
                             cat("\n", "Warnings and Errors from Analysis for Children", date(), "\n", file="InSilicoVA-2016-warnings.txt", append=TRUE)
                             file.append("InSilicoVA-2016-warnings.txt", "errorlog_insilico.txt")
                             file.remove("errorlog_insilico.txt")
-                            plotName <- paste("plotChild-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = "")
-                            if(file.exists(plotName)) file.remove(plotName)
-                            plot(rv$fitChild, top=input$topDeaths); ggsave(plotName, device="pdf")
+                            plotNameChild <- paste("plotChild-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = "")
+                            if(file.exists(plotNameChild)) file.remove(plotNameChild)
+                            plot(rv$fitChild, top=input$topDeaths); ggsave(plotNameChild, device="pdf")
                             ## rv$agg.csmfChild <- get.indiv(rv$fitChild, data=records[child,], CI = 0.95, is.aggregate=TRUE)
                             ## indivplot(rv$agg.csmfChild, top = 20, title = "Aggregated COD distribution")
                             ## ggsave(plotName, device="pdf")
@@ -950,7 +950,7 @@ server <- function(input, output, session){
                                 filename = paste("plotChild-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = ""),
                                 content = function(file) {
                                     if(!is.null(rv$fitChild)){
-                                        file.copy(plotName, file)
+                                        file.copy(plotNameChild, file)
                                     }
                                 }
                             )
@@ -990,9 +990,9 @@ server <- function(input, output, session){
                             file.append("InSilicoVA-2016-warnings.txt", "errorlog_insilico.txt")
                             file.remove("errorlog_insilico.txt")
 
-                            plotName <- paste("plotAdult-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = "")
-                            if(file.exists(plotName)) file.remove(plotName)
-                            plot(rv$fitAdult, top=input$topDeaths); ggsave(plotName, device="pdf")
+                            plotNameAdult <- paste("plotAdult-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = "")
+                            if(file.exists(plotNameAdult)) file.remove(plotNameAdult)
+                            plot(rv$fitAdult, top=input$topDeaths); ggsave(plotNameAdult, device="pdf")
                             ## rv$agg.csmfAdult <- get.indiv(rv$fitAdult, data=records[adult,], CI = 0.95, is.aggregate=TRUE)
                             ## indivplot(rv$agg.csmfAdult, top = 20, title = "Aggregated COD distribution")
                             ## ggsave(plotName, device="pdf")
@@ -1000,7 +1000,7 @@ server <- function(input, output, session){
                                 filename = paste("plotAdult-InSilicoVA-2016-", Sys.Date(), ".pdf", sep = ""),
                                 content = function(file) {
                                     if(!is.null(rv$fitAdult)){
-                                        file.copy(plotName, file)
+                                        file.copy(plotNameAdult, file)
                                     }
                                 }
                             )
