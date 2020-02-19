@@ -3,6 +3,10 @@ Type: Package
 Title: Shiny App for Analyzing Verbal Autopsy Data with openVA
 Version: 0.0.0.9999
 Authors@R: c(
+  person("Eungang", "Choi", role = "aut"),
+  person("Sam", "Clark", role = "aut"),
+  person("Zehang", "Li", role = "aut"),
+  person("McCormick", "Tyler", role = "aut"),
   person("Jason", "Thomas", email = "jarathomas@gmail.com", role = c("aut", "cre"))
   )
 Description: A package for the openVA shiny app for analyzing verbal autopsy (VA) data.
@@ -14,6 +18,13 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.0.2
-Imports: shiny 
+Depends:
+  CrossVA,
+  openVA,
+  InSilicoVA,
+  InterVA5
+Imports: 
+  shiny,
+  shinyjs
 Suggests:
     testthat

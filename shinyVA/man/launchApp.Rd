@@ -2,13 +2,16 @@
 % Please edit documentation in R/launchApp.R
 \name{launchApp}
 \alias{launchApp}
-\title{launches the shinyVA app}
+\title{Launch openVA shiny app in internet browser}
 \usage{
 launchApp()
 }
-\value{
-shiny application object
-}
 \description{
-launches the shinyVA app
+Launch openVA shiny app in internet browser
+}
+\examples{
+\dontrun{
+library(shinyVA)
+launchApp()
+}
 }

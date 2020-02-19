@@ -1,15 +1,12 @@
-#' launches the shinyVA app
+#' Launch openVA shiny app in internet browser
 #'
-#' @export launchApp
+#' @export
 #'
-#' @return shiny application object
-#'
-#' @example \dontrun {shinyVA::launchApp()}
-#'
-#'
-
-
-# wrapper for shiny::shinyApp()
+#' @examples
+#' \dontrun{
+#' library(shinyVA)
+#' launchApp()
+#' }
 launchApp <- function() {
-  shiny::shinyApp(ui = shinyAppUI, server = shinyAppServer)
+  shiny::runApp(appDir = system.file('app', package = 'shinyVA'))
 }
