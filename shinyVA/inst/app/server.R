@@ -1,6 +1,7 @@
 #' @import shiny
 server <- function(input, output, session) {
 
+  options(width = 100)
   ## Read in data
   getData <- reactive({
     vaData <- input$readIn
@@ -30,6 +31,8 @@ server <- function(input, output, session) {
   rv$neonate  <- TRUE
   rv$child    <- TRUE
   rv$adult    <- TRUE
+  rv$namesRuns <- NULL
+  analysisStatus <- reactiveValues(done = FALSE)
 
   observeEvent(input$processMe, {
 
@@ -151,42 +154,64 @@ server <- function(input, output, session) {
       ovaLogFileName <- ifelse(input$algorithm == "InSilicoVA",
                                "errorlog_insilico.txt",
                                "errorlogV5.txt")
-      for (i in 1:length(namesRuns)) {
+      #for (i in 1:length(namesRuns)) {
+      lapply(1:length(namesRuns), function (i) {
         # HERE -- create a cleanup function
         # HERE -- only run data check once (if possible)
-          descriptiveStatsName <- paste0("descriptiveStats",
-                                         gsub('^(.)', '\\U\\1',
-                                              namesRuns[i],
-                                              perl = TRUE)
-                                         )
-          output[[descriptiveStatsName]] <- renderTable({
-              if (!is.null(counts)) {
-                  matrix(counts, nrow=1, ncol=7,
-                         dimnames = list(c("# of Deaths"),
-                                         c("Male", "Female",
-                                           "Neonate", "Child", "Ages >14",
-                                           "Age is Missing", "Total")))
-              }
-          })
+        tmpNameRun <- namesRuns[i]
+        groupName <- gsub('^(.)', '\\U\\1', tmpNameRun, perl = TRUE)
+        
+        titleDescriptiveStats <- paste0("titleDescriptiveStats", groupName)
+        output[[titleDescriptiveStats]] <- renderText({
+          "Counts of Deaths by Sex & Age"
+        })
+        descriptiveStatsName <- paste0("descriptiveStats", groupName)
+        output[[descriptiveStatsName]] <- renderTable({
+          if (!is.null(counts)) {
+            matrix(counts, nrow=1, ncol=7,
+                   dimnames = list(c("# of Deaths"),
+                                   c("Male", "Female",
+                                     "Neonate", "Child", "Ages >14",
+                                     "Age is Missing", "Total")))
+          }
+        })
         modelArgs$data <- records[get(namesRuns[i]), ]
-        rvName <- paste0("fit", gsub('^(.)', '\\U\\1', namesRuns[i], perl = TRUE))
+        rvName <- paste0("fit", groupName)
         incProgress(0.5/length(namesRuns),
-                    detail = paste("Analyzing", namesRuns[i], "deaths")
+                    detail = paste("Analyzing", groupName, "deaths")
                     )
         okRun <- try(
           rv[[rvName]] <- do.call(openVA::codeVA, modelArgs)
           )
         incProgress(0.5/length(namesRuns),
-                    detail = paste("Completed analysis using", namesRuns[i], "deaths")
+                    detail = paste("Completed analysis using", groupName, "deaths")
                     )
         # produce outputs
         if (!is.null(rv[[rvName]])) {
-          tmpNameRun <- namesRuns[i]
+
           rv$indivCOD <- indivCOD(rv[[rvName]], top = 3)
-          cat("Analysis with ", namesRuns[i], "\t", date(), "\n", file = warningFileName)
+          cat("Analysis with ", groupName, "\t", date(), "\n", file = warningFileName)
           file.append(warningFileName, ovaLogFileName)
           file.remove(ovaLogFileName)
-
+          
+          # CSMF Summary
+          titleSummary <- paste0("titleSummary", groupName)
+          output[[titleSummary]] <- renderText({
+            paste("Summary of Results using", groupName, "Records")
+          })
+          emptySummary <- paste0("emptySummary", groupName)
+          output[[emptySummary]] <- renderText({
+            if (is.null(rv[[rvName]])) {
+              paste("No Summary for", groupName, "(not enough deaths for analysis)")
+            }
+          })
+          summaryGrp <- paste0("summary", groupName)
+          output[[summaryGrp]] <- renderPrint({
+            if (!is.null(rv[[rvName]])) {
+              print(summary(rv[[rvName]], top = input$topDeaths))
+            }
+          })
+          # CSMF Plot
           plotName <- paste0("plot-", tmpNameRun, "-", input$algorithm, "-", Sys.Date(), ".pdf")
           if (file.exists(plotName)) file.remove(plotName)
           plotVA(rv[[rvName]], top = input$topDeaths)
@@ -200,6 +225,17 @@ server <- function(input, output, session) {
               }
             }
           )
+          titlePlot <- paste0("titlePlot", groupName)
+          output[[titlePlot]] <- renderText({
+            paste("CSMF Plot for", groupName, "Records")
+          })
+          plotGrp <- paste0("plot", groupName)
+          output[[plotGrp]] <- renderPlot({
+            if (!is.null(rv[[rvName]])) {
+              plotVA(rv[[rvName]], top = input$topDeaths)
+            }
+          })
+          # Download individual cause assignments
           downloadCOD <- paste0('downloadCOD', namesNumericCodes[tmpNameRun])
           output[[downloadCOD]] <- downloadHandler(
             filename = paste0("individual-causes-", namesRuns[i], "-", input$algorithm, "-", Sys.Date(), ".csv"),
@@ -220,7 +256,7 @@ server <- function(input, output, session) {
           )
         }
         if(is.null(rv[[rvName]])) rv[[tmpNameRun]] <- NULL
-      }
+      })
     })
     shinyjs::enable("processMe")
     shinyjs::enable("algorithm")
@@ -263,44 +299,6 @@ server <- function(input, output, session) {
       file.copy(filename, file)
     }
   )
-
-  for (i in 1:length(rv$namesRuns)) {
-    ## Output table with descriptive statistics
-    groupName <- gsub('^(.)', '\\U\\1', rv$namesRuns[i], perl = TRUE)
-    rvName <- paste0("fit", groupName)
-    titleDescriptiveStats <- paste0("titleDescriptiveStats", groupName)
-    output[[titleDescriptiveStats]] <- renderText({
-      "Counts of Deaths by Sex & Age"
-    })
-    titleSummary <- paste0("titleSummary", groupName)
-    output[[titleSummary]] <- renderText({
-    paste("Summary of Results using", groupName, "Records")
-    })
-    emptySummary <- paste0("emptySummary", groupName)
-    output[[emptySummary]] <- renderText({
-      if (is.null(rv[[rvName]])) {
-        paste("No Summary for", groupName, "(not enough deaths for analysis)")
-      }
-    })
-    summaryGrp <- paste0("summary", groupName)
-    output[[summaryGrp]] <- renderPrint({
-      if (!is.null(rv[[rvName]])) {
-          print(summary(rv[[rvName]], top = input$topDeaths))
-      }
-    })
-    titlePlot <- paste0("titlePlot", groupName)
-    output[[titlePlotAll]] <- renderText({
-      paste("CSMF Plot for", groupName, "Records")
-    })
-    plotGrp <- paste0("plot", groupName)
-    output[[plotGrp]] <- renderPlot({
-      #      validate(
-      #        need(!is.null(rv$fitALL), "No Results")
-      #      )
-      if (!is.null(rv[[rvName]])) {
-        plotVA(rv[[rvName]], top = input$topDeaths)
-      }
-  })
   # disable download button on page load
   shinyjs::disable("downloadAgeDist")
   shinyjs::disable("downloadCOD1")
@@ -322,5 +320,4 @@ server <- function(input, output, session) {
   shinyjs::disable("downloadPlot5")
   shinyjs::disable("downloadPlot6")
   shinyjs::disable("downloadWarnings")
-  }
 }

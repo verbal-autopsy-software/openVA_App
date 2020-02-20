@@ -41,37 +41,8 @@ ui <- fluidPage(
       #h4("Data Checks"),
       checkboxInput("odkBC", "Are the data from an ODKBriefcase export?", TRUE),
 
-      conditionalPanel("output.fileUploaded", actionButton("processMe", "Analyze my data!"))#,
-      # hr(),
-      # helpText("Downloads will be available once the data have been analyzed"),
-      # downloadButton("downloadAgeDist", "Download Plot of Age Distribution as .pdf"), br(), br(),
-      # downloadButton("downloadCOD1", "Download Causes for All Records as .csv"), br(),
-      # downloadButton("downloadData1", "Download Summary for All Records as .csv"), br(),
-      # downloadButton("downloadPlot1", "Download Plot for All Records as .pdf"), br(), br(),
-      # ##
-      # downloadButton("downloadCOD2", "Download Causes for all Males as .csv"), br(),
-      # downloadButton("downloadData2", "Download Summary for Males as .csv"),
-      # downloadButton("downloadPlot2", "Download Plot for Males as .pdf"), br(), br(),
-      # ##
-      # downloadButton("downloadCOD3", "Download Causes for all Females as .csv"), br(),
-      # downloadButton("downloadData3", "Download Summary for Females as .csv"),
-      # downloadButton("downloadPlot3", "Download Plot for Females as .pdf"), br(), br(),
-      # ##
-      # downloadButton("downloadCOD4", "Download  Causes for all Neonates as .csv"), br(),
-      # downloadButton("downloadData4", "Download Summary for Neonates as .csv"),
-      # downloadButton("downloadPlot4", "Download Plot for Neonates as .pdf"), br(), br(),
-      # ##
-      # downloadButton("downloadCOD5", "Download Causes for all Children as .csv"), br(),
-      # downloadButton("downloadData5", "Download Summary for Children as .csv"),
-      # downloadButton("downloadPlot5", "Download Plot for Children as .pdf"), br(), br(),
-      # ##
-      # downloadButton("downloadCOD6", "Download Causes for all Adults as .csv"), br(),
-      # downloadButton("downloadData6", "Download Summary for Adults as .csv"),
-      # downloadButton("downloadPlot6", "Download Plot for Adults as .pdf"), br(), br(),
-      # ##
-      # downloadButton("downloadWarnings", "Download warnings as .txt")
+      conditionalPanel("output.fileUploaded", actionButton("processMe", "Analyze my data!"))
     ),
-
     ## Outputs
     mainPanel(
       tabsetPanel(type = "tabs",
@@ -118,6 +89,8 @@ ui <- fluidPage(
                            h4(textOutput("titlePlotAdult")),
                            plotOutput("plotAdult")),
                   tabPanel(title = "Download Results",
+                           br(),
+                           column(12, "Downloads are available after data have been analyzed"),
                            br(),
                            downloadButton("downloadAgeDist", "Download Plot of Age Distribution (.pdf)"),
                            br(), br(),
