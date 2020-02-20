@@ -35,7 +35,16 @@ server <- function(input, output, session) {
   analysisStatus <- reactiveValues(done = FALSE)
 
   observeEvent(input$processMe, {
-
+    
+    if (names(dev.cur()) != "null device") dev.off()
+    fileNames <- dir(system.file('app', package = 'shinyVA'))
+    filesToRemove <- grepl("plot|*warnings*|VA_results", fileNames)
+    if (sum(filesToRemove) > 0) {
+      file.remove(paste(system.file('app', package = 'shinyVA'), 
+                        fileNames[filesToRemove], 
+                        sep = "/"))
+    }
+    
     rv$fitAll     <- NULL
     rv$fitMale    <- NULL
     rv$fitFemale  <- NULL
