@@ -32,7 +32,6 @@ server <- function(input, output, session) {
   rv$child    <- TRUE
   rv$adult    <- TRUE
   rv$namesRuns <- NULL
-  analysisStatus <- reactiveValues(done = FALSE)
 
   observeEvent(input$processMe, {
     
@@ -203,6 +202,13 @@ server <- function(input, output, session) {
           file.append(warningFileName, ovaLogFileName)
           file.remove(ovaLogFileName)
           
+          if (input$algorithm == "InSilicoVA" ) {
+            orderedCSMF <- summary(rv[[rvName]])$csmf.ordered[, 1]
+          } else {
+            orderedCSMF <- summary(rv[[rvName]])$csmf.ordered[, 2]
+          }
+          newTop <- min(input$topDeaths, sum(orderedCSMF > 0))
+          
           # CSMF Summary
           titleSummary <- paste0("titleSummary", groupName)
           output[[titleSummary]] <- renderText({
@@ -217,14 +223,21 @@ server <- function(input, output, session) {
           summaryGrp <- paste0("summary", groupName)
           output[[summaryGrp]] <- renderPrint({
             if (!is.null(rv[[rvName]])) {
-              print(summary(rv[[rvName]], top = input$topDeaths))
+              print(summary(rv[[rvName]], top = newTop))
+              #print(summary(rv[[rvName]], top = input$topDeaths))
             }
           })
           # CSMF Plot
           plotName <- paste0("plot-", tmpNameRun, "-", input$algorithm, "-", Sys.Date(), ".pdf")
           if (file.exists(plotName)) file.remove(plotName)
-          plotVA(rv[[rvName]], top = input$topDeaths)
-          ggsave(plotName, device="pdf")
+          if (input$algorithm == "InSilicoVA") {
+            plotVA(rv[[rvName]], top = newTop)
+            ggsave(plotName, device="pdf")
+          } else {
+            pdf(plotName)
+            plotVA(rv[[rvName]], top = newTop)
+            dev.off()
+          }
           downloadPlot <- paste0('downloadPlot', namesNumericCodes[tmpNameRun])
           output[[downloadPlot]] <- downloadHandler(
             filename = plotName,
@@ -241,7 +254,7 @@ server <- function(input, output, session) {
           plotGrp <- paste0("plot", groupName)
           output[[plotGrp]] <- renderPlot({
             if (!is.null(rv[[rvName]])) {
-              plotVA(rv[[rvName]], top = input$topDeaths)
+              plotVA(rv[[rvName]], top = newTop)
             }
           })
           # Download individual cause assignments
@@ -259,7 +272,7 @@ server <- function(input, output, session) {
             filename = paste0("results-", namesRuns[i], "-", input$algorithm, "-", Sys.Date(), ".csv"),
             content = function(file) {
               if(!is.null(rv[[rvName]])){
-                write.csv(print(summary(rv[[rvName]], top = input$topDeaths)), file = file)
+                write.csv(print(summary(rv[[rvName]], top = newTop)), file = file)
               }
             }
           )
