@@ -23,9 +23,10 @@ RUN R CMD INSTALL /home/shiny/GitHub/shinyVA/pkg
 RUN mkdir /srv/shiny-server/shinyVA
 RUN echo "appDir <- system.file('app', package = 'shinyVA'); library(shinyVA); shinyAppDir(appDir)" > /srv/shiny-server/shinyVA/app.R
 RUN chown -R shiny:shiny /srv/shiny-server
-RUN chmod 777 /srv/shiny-server/shinyVA
+RUN chown -R shiny:shiny /usr/local/lib/R/site-library/shinyVA
 
-
-# Start container with
+# Start container with:
 # docker run --rm --user shiny -p 3838:3838 -v /srv/shinylog/:/var/log/shiny-server/ shiny_app
-# and open app with at localhost:3838/shinyVA
+
+# Open app at:
+# localhost:3838/shinyVA
