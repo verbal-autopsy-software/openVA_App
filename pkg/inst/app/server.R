@@ -2,8 +2,6 @@
 server <- function(input, output, session) {
 
   options(width = 100)
-  nCores <- parallel::detectCores() - 1
-  cl <- parallel::makeCluster(nCores)
   ## Read in data
   getData <- reactive({
     vaData <- input$readIn
@@ -162,6 +160,10 @@ server <- function(input, output, session) {
       ovaLogFileName <- ifelse(input$algorithm == "InSilicoVA",
                                "errorlog_insilico.txt",
                                "errorlogV5.txt")
+      
+      nCores <- min(parallel::detectCores() - 1, 6)
+      if (nCores == 0) nCores <- 1
+      cl <- parallel::makeCluster(nCores)
       #for (i in 1:length(namesRuns)) {
       #lapply(1:length(namesRuns), function (i) {
       parallel::clusterEvalQ(cl, {
