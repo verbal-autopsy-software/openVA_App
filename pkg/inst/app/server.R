@@ -2,6 +2,8 @@
 server <- function(input, output, session) {
 
   options(width = 100)
+  nCores <- parallel::detectCores() - 1
+  cl <- parallel::makeCluster(nCores)
   ## Read in data
   getData <- reactive({
     vaData <- input$readIn
@@ -31,7 +33,6 @@ server <- function(input, output, session) {
   rv$neonate  <- TRUE
   rv$child    <- TRUE
   rv$adult    <- TRUE
-  rv$namesRuns <- NULL
 
   observeEvent(input$processMe, {
     
@@ -74,9 +75,9 @@ server <- function(input, output, session) {
     shinyjs::disable("downloadPlot6")
     shinyjs::disable("downloadWarnings")
 
-    withProgress(value = 0, {
+    # withProgress(value = 0, {  ## HERE move this to inside parLapply
 
-      setProgress(message = paste("Starting analysis of data (this may take a while)"))
+      #setProgress(message = paste("Starting analysis of data (this may take a while)"))
 
       # set up objects needed to loop through all the calls to openVA
       if (input$algorithm == "InSilicoVA") {
@@ -101,7 +102,6 @@ server <- function(input, output, session) {
       includeRuns <- c(input$byAll, rep(input$bySex, 2), rep(input$byAge, 3))
       nRuns <- sum(includeRuns)
       namesRuns <- namesRuns[includeRuns]
-      rv$namesRuns <- namesRuns
 
       # read in data
       if(input$odkBC){
@@ -163,7 +163,15 @@ server <- function(input, output, session) {
                                "errorlog_insilico.txt",
                                "errorlogV5.txt")
       #for (i in 1:length(namesRuns)) {
-      lapply(1:length(namesRuns), function (i) {
+      #lapply(1:length(namesRuns), function (i) {
+      parallel::clusterEvalQ(cl, {
+        library(shiny)
+        library(openVA)
+      })
+      parallel::clusterExport(cl, 
+                              varlist = c("rv", "namesRuns", "records"), 
+                              envir = environment())
+      parallel::parLapply(cl, 1:length(namesRuns), function (i) {
         # HERE -- create a cleanup function
         # HERE -- only run data check once (if possible)
         tmpNameRun <- namesRuns[i]
@@ -185,15 +193,15 @@ server <- function(input, output, session) {
         })
         modelArgs$data <- records[get(namesRuns[i]), ]
         rvName <- paste0("fit", groupName)
-        incProgress(0.5/length(namesRuns),
-                    detail = paste("Analyzing", groupName, "deaths")
-                    )
+        # incProgress(0.5/length(namesRuns),
+        #             detail = paste("Analyzing", groupName, "deaths")
+        #             )
         okRun <- try(
           rv[[rvName]] <- do.call(openVA::codeVA, modelArgs)
           )
-        incProgress(0.5/length(namesRuns),
-                    detail = paste("Completed analysis using", groupName, "deaths")
-                    )
+        # incProgress(0.5/length(namesRuns),
+        #             detail = paste("Completed analysis using", groupName, "deaths")
+        #             )
         # produce outputs
         if (!is.null(rv[[rvName]])) {
 
@@ -279,7 +287,8 @@ server <- function(input, output, session) {
         }
         if(is.null(rv[[rvName]])) rv[[tmpNameRun]] <- NULL
       })
-    })
+      parallel::stopCluster(cl)
+    #})
     shinyjs::enable("processMe")
     shinyjs::enable("algorithm")
     shinyjs::enable("downloadAgeDist")
