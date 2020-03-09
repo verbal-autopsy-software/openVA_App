@@ -27,5 +27,5 @@ Imports:
   shiny,
   shinyjs
 Suggests:
-    testthat
-    shinytest
+  testthat,
+  shinytest
