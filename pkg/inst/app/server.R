@@ -108,7 +108,7 @@ server <- function(input, output, session) {
         write.csv(getData(), file = 'tmpOut.csv', row.names = FALSE)
         pyAlg <- ifelse(input$algorithm == "InSilicoVA", "InsillicoVA", "InterVA5")
         pyCall <- paste0('/usr/local/bin/pycrossva-transform AUTODETECT ',
-                         pyAlg, ' tmpOut.csv --dst pyOut.csv')
+                         'InterVA5', ' tmpOut.csv --dst pyOut.csv')
         system(pyCall)
         records <- read.csv('pyOut.csv', stringsAsFactors = FALSE)
       } else{
