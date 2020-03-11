@@ -8,5 +8,5 @@
 #' launchApp()
 #' }
 launchApp <- function() {
-  shiny::runApp(appDir = system.file('app', package = 'shinyVA'))
+  shiny::runApp(appDir = system.file('app', package = 'openVAapp'))
 }

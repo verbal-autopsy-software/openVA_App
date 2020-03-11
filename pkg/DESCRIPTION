@@ -1,7 +1,7 @@
-Package: shinyVA
+Package: openVAapp
 Type: Package
-Title: Shiny App for Analyzing Verbal Autopsy Data with openVA
-Version: 0.0.0.9999
+Title: R Shiny App for Analyzing Verbal Autopsy Data with openVA
+Version: 0.0.0.9000
 Authors@R: c(
   person("Eungang", "Choi", role = "aut"),
   person("Sam", "Clark", role = "aut"),
@@ -9,7 +9,7 @@ Authors@R: c(
   person("McCormick", "Tyler", role = "aut"),
   person("Jason", "Thomas", email = "jarathomas@gmail.com", role = c("aut", "cre"))
   )
-Description: A package for the openVA shiny app for analyzing verbal autopsy (VA) data.
+Description: A package for the openVA R Shiny app for analyzing verbal autopsy (VA) data.
   The data should come from the WHO 2016 VA questionnaire.  Currently, the InterVA5 and
   InSilicoVA algorithms can be used to assign causes of death by age group and sex.
   The app displays a summary and plot of the Cause-Specific Mortality Fractions (for each

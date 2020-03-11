@@ -1,4 +1,4 @@
-# OpenVA_RShiny
+# openVA_App
 
 Analyze Verbal Autopsy (VA) data with the InSilicoVA & InterVA algorithms using `shiny-openVA.R`, which  builds a web app with the 
 **R** package [Shiny](https://cran.r-project.org/web/packages/shiny/index.html).  The app can process VA data from the 2016 WHO VA
@@ -6,9 +6,9 @@ instrument (versions 1.4.1 and 1.5.1).  Data from an Open Data Kit (ODK) Briefca
 
 ## Installation
 
-The dependencies for the OpenVA_RShiny app include Java, and R, as well as several **R** packages.  
+The dependencies for openVA_App include Java, and R, as well as several **R** packages.  
 
-To run the OpenVA_RShiny app: (1) download the files `shiny-openVA.R`; (2) install Java Development Kit; 
+To run openVA_App: (1) download the files `shiny-openVA.R`; (2) install Java Development Kit; 
 (3) install [**R**](https://cran.r-project.org/); and (4) start **R** and install the necessary packages with the following command:
 
 ```r

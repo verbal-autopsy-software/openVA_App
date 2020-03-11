@@ -31,20 +31,20 @@ RUN pip3.7 install -r /home/shiny/GitHub/pyCrossVA/requirements.txt
 RUN cd /home/shiny/GitHub/pyCrossVA; python3.7 setup.py install
 RUN R CMD javareconf
 RUN R -e "install.packages(c('glue', 'shinyjs', 'openVA', 'CrossVA'), repos='http://cran.rstudio.com/')"
-RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/shinyVA
-RUN R CMD INSTALL /home/shiny/GitHub/shinyVA/pkg
+RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/openVA_App
+RUN R CMD INSTALL /home/shiny/GitHub/openVA_App/pkg
 
 ## NEED TO CHANGE WORKING DIRECTORY
-RUN mkdir /srv/shiny-server/shinyVA
-RUN echo "appDir <- system.file('app', package = 'shinyVA'); library(shinyVA); shinyAppDir(appDir)" > /srv/shiny-server/shinyVA/app.R
+RUN mkdir /srv/shiny-server/openVA_App
+RUN echo "appDir <- system.file('app', package = 'openVA_App'); library(openVA_App); shinyAppDir(appDir)" > /srv/shiny-server/openVA_App/app.R
 RUN chown -R shiny:shiny /srv/shiny-server
-RUN chown -R shiny:shiny /usr/local/lib/R/site-library/shinyVA
+RUN chown -R shiny:shiny /usr/local/lib/R/site-library/openVA_App
 
 # Start container with:
 # docker run --rm --user shiny -p 3838:3838 -v /srv/shinylog/:/var/log/shiny-server/ shiny_app
 
 # Open app at:
-# localhost:3838/shinyVA
+# localhost:3838/openVA_App
 
 # Open app at:
-# localhost:3838/shinyVA
+# localhost:3838/openVA_App
