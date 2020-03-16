@@ -22,7 +22,8 @@ Depends:
   CrossVA,
   openVA,
   InSilicoVA,
-  InterVA5
+  InterVA5,
+  parallel
 Imports: 
   shiny,
   shinyjs
