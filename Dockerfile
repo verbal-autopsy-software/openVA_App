@@ -35,16 +35,13 @@ RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/
 RUN R CMD INSTALL /home/shiny/GitHub/openVA_App/pkg
 
 ## NEED TO CHANGE WORKING DIRECTORY
-RUN mkdir /srv/shiny-server/openVA_App
-RUN echo "appDir <- system.file('app', package = 'openVA_App'); library(openVA_App); shinyAppDir(appDir)" > /srv/shiny-server/openVA_App/app.R
+RUN mkdir /srv/shiny-server/openVAapp
+RUN echo "appDir <- system.file('app', package = 'openVAapp'); library(openVAapp); shinyAppDir(appDir)" > /srv/shiny-server/openVAapp/app.R
 RUN chown -R shiny:shiny /srv/shiny-server
-RUN chown -R shiny:shiny /usr/local/lib/R/site-library/openVA_App
+RUN chown -R shiny:shiny /usr/local/lib/R/site-library/openVAapp
 
 # Start container with:
-# docker run --rm --user shiny -p 3838:3838 -v /srv/shinylog/:/var/log/shiny-server/ shiny_app
+# docker run --rm --user shiny -p 3838:3838 -v /srv/shinylog/:/var/log/shiny-server/ openva_app
 
 # Open app at:
-# localhost:3838/openVA_App
-
-# Open app at:
-# localhost:3838/openVA_App
+# localhost:3838/openVAapp
