@@ -120,6 +120,10 @@ ui <- fluidPage(
                              column(4, downloadButton("downloadPlot1", "Plot (.pdf)")),
                              column(4, downloadButton("downloadPlot2", "Plot (.pdf)")),
                              column(4, downloadButton("downloadPlot3", "Plot (.pdf)"))),
+                           fluidRow(
+                             column(4, downloadButton("downloadWarnings1", "Warning Messages (.txt)")),
+                             column(4, downloadButton("downloadWarnings2", "Warning Messages (.txt)")),
+                             column(4, downloadButton("downloadWarnings3", "Warning Messages (.txt)"))),
                            column(12, br()),
                            fluidRow(
                              column(4, "Results for Neonate Records"),
@@ -136,7 +140,11 @@ ui <- fluidPage(
                            fluidRow(
                              column(4, downloadButton("downloadPlot4", "Plot (.pdf)")),
                              column(4, downloadButton("downloadPlot5", "Plot (.pdf)")),
-                             column(4, downloadButton("downloadPlot6", "Plot (.pdf)")))
+                             column(4, downloadButton("downloadPlot6", "Plot (.pdf)"))),
+                           fluidRow(
+                             column(4, downloadButton("downloadWarnings4", "Warning Messages (.txt)")),
+                             column(4, downloadButton("downloadWarnings5", "Warning Messages (.txt)")),
+                             column(4, downloadButton("downloadWarnings6", "Warning Messages (.txt)")))
                   )
       )
     )

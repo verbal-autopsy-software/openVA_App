@@ -70,7 +70,12 @@ server <- function(input, output, session) {
     shinyjs::disable("downloadPlot4")
     shinyjs::disable("downloadPlot5")
     shinyjs::disable("downloadPlot6")
-    shinyjs::disable("downloadWarnings")
+    shinyjs::disable("downloadWarnings1")
+    shinyjs::disable("downloadWarnings2")
+    shinyjs::disable("downloadWarnings3")
+    shinyjs::disable("downloadWarnings4")
+    shinyjs::disable("downloadWarnings5")
+    shinyjs::disable("downloadWarnings6")
     
     progress <- shiny::Progress$new()
     progress$set(message = paste("Starting openVA...(this may take a while)"),
@@ -90,7 +95,7 @@ server <- function(input, output, session) {
                         data.type = "WHO2016",
                         HIV=input$HIV,
                         Malaria=input$Malaria,
-                        directory=getwd(),
+                        #directory=getwd(),
                         filename="VA_result")
     }
     namesRuns <- c("all", "male", "female", "neonate", "child", "adult")
@@ -99,7 +104,9 @@ server <- function(input, output, session) {
     includeRuns <- c(input$byAll, rep(input$bySex, 2), rep(input$byAge, 3))
     nRuns <- sum(includeRuns)
     namesRuns <- namesRuns[includeRuns]
-    
+    tmpDirResults <- paste0(getwd(), "/__tmp__", namesRuns)
+    lapply(tmpDirResults, function (i) {if (!dir.exists(i)) unlink(i, recursive = TRUE, force = TRUE)})
+    lapply(tmpDirResults, function (i) {dir.create(i)})
     # read in data
     if(input$odkBC){
       records <- CrossVA::odk2openVA(getData())
@@ -157,14 +164,14 @@ server <- function(input, output, session) {
       }
     )
     # run codeVA()
-    warningFileName <- paste(input$algorithm, "warnings.txt", sep = "-")
-    if(file.exists(warningFileName)) file.remove(warningFileName)
-    file.create(warningFileName)
-    cat("Warnings and Errors from", input$algorithm, "\t", date(),
-        "\n", file = warningFileName)
-    ovaLogFileName <- ifelse(input$algorithm == "InSilicoVA",
-                             "errorlog_insilico.txt",
-                             "errorlogV5.txt")
+    # warningFileName <- paste(input$algorithm, "warnings.txt", sep = "-")
+    # if(file.exists(warningFileName)) file.remove(warningFileName)
+    # file.create(warningFileName)
+    # cat("Warnings and Errors from", input$algorithm, "\t", date(),
+    #     "\n", file = warningFileName)
+    # ovaLogFileName <- ifelse(input$algorithm == "InSilicoVA",
+    #                          "errorlog_insilico.txt",
+    #                          "errorlogV5.txt")
     
     nCores <- min(parallel::detectCores() - 1, length(namesRuns))
     if (nCores == 0) nCores <- 1
@@ -176,15 +183,13 @@ server <- function(input, output, session) {
     vaOut <- list(all = NULL, male = NULL, female = NULL,
                   neonate = NULL, child = NULL, adult = NULL)
     parallel::clusterExport(cl,
-                            varlist = c("namesRuns", "modelArgs", "records",
-                                        "all", "male", "female",
+                            varlist = c("namesRuns", "tmpDirResults", "modelArgs", 
+                                        "records", "all", "male", "female",
                                         "neonate", "child", "adult"),
                             envir = environment())
     vaOut <- parallel::parLapply(cl, 1:length(namesRuns), function (i) {
-      tmpNameRun <- namesRuns[i]
-      groupName <- gsub('^(.)', '\\U\\1', tmpNameRun, perl = TRUE)
       modelArgs$data <- records[get(namesRuns[i]), ]
-      rvName <- paste0("fit", groupName)
+      modelArgs$directory <- tmpDirResults[i]
       okRun <- try(
         do.call(openVA::codeVA, modelArgs)
       )
@@ -220,10 +225,7 @@ server <- function(input, output, session) {
       if (!is.null(rv[[rvName]])) {
         
         rv$indivCOD <- indivCOD(rv[[rvName]], top = 3)
-        cat("Analysis with ", groupName, "\t", date(), "\n", file = warningFileName)
-        file.append(warningFileName, ovaLogFileName)
-        #file.remove(ovaLogFileName)
-        
+
         if (input$algorithm == "InSilicoVA" ) {
           orderedCSMF <- summary(rv[[rvName]])$csmf.ordered[, 1]
         } else {
@@ -297,6 +299,25 @@ server <- function(input, output, session) {
             }
           }
         )
+        downloadWarnings <- paste0('downloadWarnings', namesNumericCodes[tmpNameRun])
+        warningFileName <- paste(input$algorithm, "warnings", namesRuns[i], ".txt", sep = "-")
+        if(file.exists(warningFileName)) file.remove(warningFileName)
+        file.create(warningFileName)
+        cat("Warnings and Errors from", input$algorithm, "\t", namesRuns[i], "\t", date(),
+            "\n", file = warningFileName)
+        ovaLogFileName <- ifelse(input$algorithm == "InSilicoVA",
+                                 paste0(tmpDirResults[i], "/errorlog_insilico.txt"),
+                                 paste0(tmpDirResults[i], "/errorlogV5.txt"))
+        file.append(warningFileName, ovaLogFileName)
+        #unlink(ovaLogFileName, recursive = TRUE, force = TRUE)
+        output[[downloadWarnings]] <- downloadHandler(
+          filename = paste(input$algorithm, "warnings", namesRuns[i], ".txt", sep = "-"),
+          content = function(file) {
+            if(!is.null(rv[[rvName]])){
+              file.copy(warningFileName, file)
+            }
+          }
+        )
       }
       if(is.null(rv[[rvName]])) rv[[tmpNameRun]] <- NULL
     })
@@ -309,31 +330,37 @@ server <- function(input, output, session) {
       shinyjs::enable("downloadPlot1")
       shinyjs::enable("downloadCOD1")
       shinyjs::enable("downloadData1")
+      shinyjs::enable("downloadWarnings1")
     }
     if(input$bySex & length(male[male])>0){
       shinyjs::enable("downloadPlot2")
       shinyjs::enable("downloadCOD2")
       shinyjs::enable("downloadData2")
+      shinyjs::enable("downloadWarnings2")
     }
     if(input$bySex & length(female[female])>0){
       shinyjs::enable("downloadPlot3")
       shinyjs::enable("downloadCOD3")
       shinyjs::enable("downloadData3")
+      shinyjs::enable("downloadWarnings3")
     }
     if(input$byAge & length(neonate[neonate])>0){
       shinyjs::enable("downloadPlot4")
       shinyjs::enable("downloadCOD4")
       shinyjs::enable("downloadData4")
+      shinyjs::enable("downloadWarnings4")
     }
     if(input$byAge & length(child[child])>0){
       shinyjs::enable("downloadPlot5")
       shinyjs::enable("downloadCOD5")
       shinyjs::enable("downloadData5")
+      shinyjs::enable("downloadWarnings5")
     }
     if(input$byAge & length(adult[adult])>0){
       shinyjs::enable("downloadPlot6")
       shinyjs::enable("downloadCOD6")
       shinyjs::enable("downloadData6")
+      shinyjs::enable("downloadWarnings6")
     }
   })
   
@@ -363,5 +390,10 @@ server <- function(input, output, session) {
   shinyjs::disable("downloadPlot4")
   shinyjs::disable("downloadPlot5")
   shinyjs::disable("downloadPlot6")
-  shinyjs::disable("downloadWarnings")
+  shinyjs::disable("downloadWarnings1")
+  shinyjs::disable("downloadWarnings2")
+  shinyjs::disable("downloadWarnings3")
+  shinyjs::disable("downloadWarnings4")
+  shinyjs::disable("downloadWarnings5")
+  shinyjs::disable("downloadWarnings6")
 }
