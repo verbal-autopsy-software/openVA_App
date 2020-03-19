@@ -52,6 +52,7 @@ server <- function(input, output, session) {
     shinyjs::disable("processMe")
     shinyjs::disable("algorithm")
     shinyjs::disable("downloadAgeDist")
+    shinyjs::disable("downloadPyCrossVA")
     shinyjs::disable("downloadCOD1")
     shinyjs::disable("downloadCOD2")
     shinyjs::disable("downloadCOD3")
@@ -109,16 +110,33 @@ server <- function(input, output, session) {
     lapply(tmpDirResults, function (i) {dir.create(i)})
     # read in data
     if(input$odkBC){
-      records <- CrossVA::odk2openVA(getData())
-      records$ID <- getData()$meta.instanceID
-      # write.csv(getData(), file = 'tmpOut.csv', row.names = FALSE)
-      # pyAlg <- ifelse(input$algorithm == "InSilicoVA", "InsillicoVA", "InterVA5")
-      # pyCall <- paste0('/usr/local/bin/pycrossva-transform AUTODETECT ',
-      #                  'InterVA5', ' tmpOut.csv --dst pyOut.csv')
-      # system(pyCall)
-      # records <- read.csv('pyOut.csv', stringsAsFactors = FALSE)
-    } else{
+      ## records <- CrossVA::odk2openVA(getData())
+      ## records$ID <- getData()$meta.instanceID
+      write.csv(getData(), file = 'tmpOut.csv', row.names = FALSE)
+      pyAlg <- ifelse(input$algorithm == "InSilicoVA", "InsillicoVA", "InterVA5")
+      pathPyCrossVA <- system('which pycrossva-transform', intern = TRUE)
+      pyCall <- paste0(pathPyCrossVA, ' AUTODETECT ',
+                       'InterVA5', ' tmpOut.csv --dst pyOut.csv')
+      pyCallOutput <- system(pyCall, intern = TRUE)
+      # output has numerous "[?]" and needs to be split on "\t" 
+      pyCallOutput <- gsub("\\[\\?\\]", "", pyCallOutput)
+      pyCallOutput <- unlist(strsplit(pyCallOutput, "\t"))
+      records <- read.csv('pyOut.csv', stringsAsFactors = FALSE)
+    } else {
       records <- getData()
+    }
+    if(input$odkBC){
+      pyCrossVAFileName <- "Messages_ODK_Conversion.txt"
+      if (file.exists(pyCrossVAFileName)) file.remove(pyCrossVAFileName)
+      file.create(pyCrossVAFileName)
+      cat("Messages from running pyCrossVA", "\t", date(), "\n", file = pyCrossVAFileName)
+      cat(paste(pyCallOutput, collapse = "\n"), file = pyCrossVAFileName)
+      output$downloadPyCrossVA <- downloadHandler(
+        filename = pyCrossVAFileName,
+        content = function(file) {
+          file.copy(pyCrossVAFileName, file)
+        }
+      )
     }
     
     # object needed to render table of demographic variables
@@ -164,15 +182,6 @@ server <- function(input, output, session) {
       }
     )
     # run codeVA()
-    # warningFileName <- paste(input$algorithm, "warnings.txt", sep = "-")
-    # if(file.exists(warningFileName)) file.remove(warningFileName)
-    # file.create(warningFileName)
-    # cat("Warnings and Errors from", input$algorithm, "\t", date(),
-    #     "\n", file = warningFileName)
-    # ovaLogFileName <- ifelse(input$algorithm == "InSilicoVA",
-    #                          "errorlog_insilico.txt",
-    #                          "errorlogV5.txt")
-    
     nCores <- min(parallel::detectCores() - 1, length(namesRuns))
     if (nCores == 0) nCores <- 1
     cl <- parallel::makeCluster(nCores)
@@ -326,7 +335,10 @@ server <- function(input, output, session) {
     shinyjs::enable("processMe")
     shinyjs::enable("algorithm")
     shinyjs::enable("downloadAgeDist")
-    if(input$byAll){
+    if (input$odkBC) {
+      shinyjs::enable("download")
+    }
+    if (input$byAll) {
       shinyjs::enable("downloadPlot1")
       shinyjs::enable("downloadCOD1")
       shinyjs::enable("downloadData1")
@@ -372,6 +384,7 @@ server <- function(input, output, session) {
   )
   # disable download button on page load
   shinyjs::disable("downloadAgeDist")
+  shinyjs::disable("downloadPyCrossVA")
   shinyjs::disable("downloadCOD1")
   shinyjs::disable("downloadCOD2")
   shinyjs::disable("downloadCOD3")

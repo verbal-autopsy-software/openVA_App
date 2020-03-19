@@ -101,7 +101,9 @@ ui <- fluidPage(
                            br(),
                            column(12, "Downloads are available after data have been analyzed"),
                            br(),
-                           downloadButton("downloadAgeDist", "Download Plot of Age Distribution (.pdf)"),
+                           fluidRow(
+                             column(6, downloadButton("downloadAgeDist", "Download Plot of Age Distribution (.pdf)")),
+                             column(6, downloadButton("downloadPyCrossVA", "Download Messages from ODK Conversion (.txt)"))),
                            br(), br(),
                            fluidRow(
                              column(4, "Results for All Records"),
