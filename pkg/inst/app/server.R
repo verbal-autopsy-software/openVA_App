@@ -105,10 +105,12 @@ server <- function(input, output, session) {
     nRuns <- sum(includeRuns)
     namesRuns <- namesRuns[includeRuns]
     tmpDirResults <- paste0(getwd(), "/__tmp__", namesRuns)
-    lapply(tmpDirResults, function (i) {if (!dir.exists(i)) unlink(i, recursive = TRUE, force = TRUE)})
+    lapply(tmpDirResults, function (i) {
+      if (dir.exists(i)) unlink(i, recursive = TRUE, force = TRUE)
+      })
     lapply(tmpDirResults, function (i) {dir.create(i)})
     # read in data
-    if(input$odkBC){
+    if(input$odkBC & input$algorithm != 'Tariff2'){
       records <- CrossVA::odk2openVA(getData())
       records$ID <- getData()$meta.instanceID
       # write.csv(getData(), file = 'tmpOut.csv', row.names = FALSE)
@@ -122,8 +124,8 @@ server <- function(input, output, session) {
     }
     
     # object needed to render table of demographic variables
-    # HERE -- create helper function that does table for age and sex
     names(records) <- tolower(names(records))
+    whoData <- "i004a" %in% names(records)
     all <- rep(TRUE, nrow(records))
     male <- rep(FALSE, length(records$i019a))
     male[records$i019a == "y"] <- TRUE
@@ -152,222 +154,411 @@ server <- function(input, output, session) {
                                     records$i022d=="." & records$i022e=="." & records$i022f=="." &
                                     records$i022g=="."]),
                 nrow(records))
-    
-    if(file.exists("plotAgeDist.pdf")) file.remove("plotAgeDist.pdf")
-    pdf("plotAgeDist.pdf")
-    barplot(table(ageGroup), horiz = TRUE, main="Age Distribution", xlab="Counts")
-    dev.off()
-    output$downloadAgeDist <- downloadHandler(
-      filename = "plotAgeDist.pdf",
-      content = function(file) {
-        file.copy("plotAgeDist.pdf", file)
-      }
-    )
-    # run codeVA()
-    # warningFileName <- paste(input$algorithm, "warnings.txt", sep = "-")
-    # if(file.exists(warningFileName)) file.remove(warningFileName)
-    # file.create(warningFileName)
-    # cat("Warnings and Errors from", input$algorithm, "\t", date(),
-    #     "\n", file = warningFileName)
-    # ovaLogFileName <- ifelse(input$algorithm == "InSilicoVA",
-    #                          "errorlog_insilico.txt",
-    #                          "errorlogV5.txt")
-    
-    nCores <- min(parallel::detectCores() - 1, length(namesRuns))
-    if (nCores == 0) nCores <- 1
-    cl <- parallel::makeCluster(nCores)
-    parallel::clusterEvalQ(cl, {
-      library(shiny)
-      library(openVA)
-    })
-    vaOut <- list(all = NULL, male = NULL, female = NULL,
-                  neonate = NULL, child = NULL, adult = NULL)
-    parallel::clusterExport(cl,
-                            varlist = c("namesRuns", "tmpDirResults", "modelArgs", 
-                                        "records", "all", "male", "female",
-                                        "neonate", "child", "adult"),
-                            envir = environment())
-    vaOut <- parallel::parLapply(cl, 1:length(namesRuns), function (i) {
-      modelArgs$data <- records[get(namesRuns[i]), ]
-      modelArgs$directory <- tmpDirResults[i]
-      okRun <- try(
-        do.call(openVA::codeVA, modelArgs)
-      )
-      okRun
-    })
-    parallel::stopCluster(cl)
-    progress$set(message = "done with analyses", value = 5/6)
-    names(vaOut) <- namesRuns
-    
-    lapply(1:length(namesRuns), function (i) {
-      
-      tmpNameRun <- namesRuns[i]
-      groupName <- gsub('^(.)', '\\U\\1', tmpNameRun, perl = TRUE)
-      rvName <- paste0("fit", groupName)
-      rv[[rvName]] <- vaOut[[tmpNameRun]]
-      
-      titleDescriptiveStats <- paste0("titleDescriptiveStats", groupName)
-      output[[titleDescriptiveStats]] <- renderText({
-        "Counts of Deaths by Sex & Age"
-      })
-      descriptiveStatsName <- paste0("descriptiveStats", groupName)
-      output[[descriptiveStatsName]] <- renderTable({
-        if (!is.null(counts)) {
-          matrix(counts, nrow=1, ncol=7,
-                 dimnames = list(c("# of Deaths"),
-                                 c("Male", "Female",
-                                   "Neonate", "Child", "Ages >14",
-                                   "Age is Missing", "Total")))
-        }
-      })
-      
-      # produce outputs
-      if (!is.null(rv[[rvName]])) {
-        
-        rv$indivCOD <- indivCOD(rv[[rvName]], top = 3)
 
-        if (input$algorithm == "InSilicoVA" ) {
-          orderedCSMF <- summary(rv[[rvName]])$csmf.ordered[, 1]
-        } else {
-          orderedCSMF <- summary(rv[[rvName]])$csmf.ordered[, 2]
+    # InSilico & InterVA5
+    if (input$algorithm == "InSilicoVA" | input$algorithm == "InterVA5") {
+      if(file.exists("plotAgeDist.pdf")) file.remove("plotAgeDist.pdf")
+      pdf("plotAgeDist.pdf")
+      barplot(table(ageGroup), horiz = TRUE, main="Age Distribution", xlab="Counts")
+      dev.off()
+      output$downloadAgeDist <- downloadHandler(
+        filename = "plotAgeDist.pdf",
+        content = function(file) {
+          file.copy("plotAgeDist.pdf", file)
         }
-        newTop <- min(input$topDeaths, sum(orderedCSMF > 0))
+      )
+      # run codeVA()
+      nCores <- min(parallel::detectCores() - 1, length(namesRuns))
+      if (nCores == 0) nCores <- 1
+      cl <- parallel::makeCluster(nCores)
+      parallel::clusterEvalQ(cl, {
+        library(shiny)
+        library(openVA)
+      })
+      vaOut <- list(all = NULL, male = NULL, female = NULL,
+                    neonate = NULL, child = NULL, adult = NULL)
+      parallel::clusterExport(cl,
+                              varlist = c("namesRuns", "tmpDirResults", "modelArgs", 
+                                          "records", "all", "male", "female",
+                                          "neonate", "child", "adult"),
+                              envir = environment())
+      vaOut <- parallel::parLapply(cl, 1:length(namesRuns), function (i) {
+        modelArgs$data <- records[get(namesRuns[i]), ]
+        modelArgs$directory <- tmpDirResults[i]
+        okRun <- try(
+          do.call(openVA::codeVA, modelArgs)
+        )
+        okRun
+      })
+      parallel::stopCluster(cl)
+      progress$set(message = "done with analyses", value = 5/6)
+      names(vaOut) <- namesRuns
+      
+      lapply(1:length(namesRuns), function (i) {
         
-        # CSMF Summary
+        tmpNameRun <- namesRuns[i]
+        groupName <- gsub('^(.)', '\\U\\1', tmpNameRun, perl = TRUE)
+        rvName <- paste0("fit", groupName)
+        rv[[rvName]] <- vaOut[[tmpNameRun]]
+        
+        titleDescriptiveStats <- paste0("titleDescriptiveStats", groupName)
+        output[[titleDescriptiveStats]] <- renderText({
+          "Counts of Deaths by Sex & Age"
+        })
+        descriptiveStatsName <- paste0("descriptiveStats", groupName)
+        output[[descriptiveStatsName]] <- renderTable({
+          if (!is.null(counts)) {
+            matrix(counts, nrow=1, ncol=7,
+                   dimnames = list(c("# of Deaths"),
+                                   c("Male", "Female",
+                                     "Neonate", "Child", "Ages >14",
+                                     "Age is Missing", "Total")))
+          }
+        })
+        
+        # produce outputs
+        if (!is.null(rv[[rvName]])) {
+          
+          rv$indivCOD <- indivCOD(rv[[rvName]], top = 3)
+          
+          if (input$algorithm == "InSilicoVA" ) {
+            orderedCSMF <- summary(rv[[rvName]])$csmf.ordered[, 1]
+          } else {
+            orderedCSMF <- summary(rv[[rvName]])$csmf.ordered[, 2]
+          }
+          newTop <- min(input$topDeaths, sum(orderedCSMF > 0))
+          
+          # CSMF Summary
+          titleSummary <- paste0("titleSummary", groupName)
+          output[[titleSummary]] <- renderText({
+            paste("Summary of Results using", groupName, "Records")
+          })
+          summaryGrp <- paste0("summary", groupName)
+          output[[summaryGrp]] <- renderPrint({
+            if (!is.null(rv[[rvName]])) {
+              print(summary(rv[[rvName]], top = newTop))
+            }
+          })
+          # CSMF Plot
+          plotName <- paste0("plot-", tmpNameRun, "-", input$algorithm, "-", Sys.Date(), ".pdf")
+          if (file.exists(plotName)) file.remove(plotName)
+          if (input$algorithm == "InSilicoVA") {
+            plotVA(rv[[rvName]], top = newTop)
+            ggsave(plotName, device="pdf")
+          } else {
+            pdf(plotName)
+            plotVA(rv[[rvName]], top = newTop)
+            dev.off()
+          }
+          downloadPlot <- paste0('downloadPlot', namesNumericCodes[tmpNameRun])
+          output[[downloadPlot]] <- downloadHandler(
+            filename = plotName,
+            content = function(file) {
+              if(!is.null(rv[[rvName]])){
+                file.copy(plotName, file)
+              }
+            }
+          )
+          titlePlot <- paste0("titlePlot", groupName)
+          output[[titlePlot]] <- renderText({
+            paste("CSMF Plot for", groupName, "Records")
+          })
+          plotGrp <- paste0("plot", groupName)
+          output[[plotGrp]] <- renderPlot({
+            if (!is.null(rv[[rvName]])) {
+              plotVA(rv[[rvName]], top = newTop)
+            }
+          })
+          # Download individual cause assignments
+          downloadCOD <- paste0('downloadCOD', namesNumericCodes[tmpNameRun])
+          output[[downloadCOD]] <- downloadHandler(
+            filename = paste0("individual-causes-", namesRuns[i], "-", input$algorithm, "-", Sys.Date(), ".csv"),
+            content = function(file) {
+              if(!is.null(rv[[rvName]])){
+                write.csv(rv$indivCOD, file = file, row.names = FALSE)
+              }
+            }
+          )
+          downloadData <- paste0('downloadData', namesNumericCodes[tmpNameRun])
+          output[[downloadData]] <- downloadHandler(
+            filename = paste0("results-", namesRuns[i], "-", input$algorithm, "-", Sys.Date(), ".csv"),
+            content = function(file) {
+              if(!is.null(rv[[rvName]])){
+                write.csv(print(summary(rv[[rvName]], top = newTop)), file = file)
+              }
+            }
+          )
+          downloadWarnings <- paste0('downloadWarnings', namesNumericCodes[tmpNameRun])
+          warningFileName <- paste(input$algorithm, "warnings", namesRuns[i], ".txt", sep = "-")
+          if(file.exists(warningFileName)) file.remove(warningFileName)
+          file.create(warningFileName)
+          cat("Warnings and Errors from", input$algorithm, "\t", namesRuns[i], "\t", date(),
+              "\n", file = warningFileName)
+          ovaLogFileName <- ifelse(input$algorithm == "InSilicoVA",
+                                   paste0(tmpDirResults[i], "/errorlog_insilico.txt"),
+                                   paste0(tmpDirResults[i], "/errorlogV5.txt"))
+          file.append(warningFileName, ovaLogFileName)
+          #unlink(ovaLogFileName, recursive = TRUE, force = TRUE)
+          output[[downloadWarnings]] <- downloadHandler(
+            filename = paste(input$algorithm, "warnings", namesRuns[i], ".txt", sep = "-"),
+            content = function(file) {
+              if(!is.null(rv[[rvName]])){
+                file.copy(warningFileName, file)
+              }
+            }
+          )
+        }
         titleSummary <- paste0("titleSummary", groupName)
         output[[titleSummary]] <- renderText({
-          paste("Summary of Results using", groupName, "Records")
-        })
-        emptySummary <- paste0("emptySummary", groupName)
-        output[[emptySummary]] <- renderText({
           if (is.null(rv[[rvName]])) {
             paste("No Summary for", groupName, "(not enough deaths for analysis)")
           }
         })
-        summaryGrp <- paste0("summary", groupName)
-        output[[summaryGrp]] <- renderPrint({
-          if (!is.null(rv[[rvName]])) {
-            print(summary(rv[[rvName]], top = newTop))
-          }
-        })
-        # CSMF Plot
-        plotName <- paste0("plot-", tmpNameRun, "-", input$algorithm, "-", Sys.Date(), ".pdf")
-        if (file.exists(plotName)) file.remove(plotName)
-        if (input$algorithm == "InSilicoVA") {
-          plotVA(rv[[rvName]], top = newTop)
-          ggsave(plotName, device="pdf")
-        } else {
-          pdf(plotName)
-          plotVA(rv[[rvName]], top = newTop)
-          dev.off()
+        if(is.null(rv[[rvName]])) rv[[tmpNameRun]] <- NULL
+      })
+    }
+    if (input$algorithm == "Tariff2"){
+      file.remove(grep('plot-.*-Tariff2', dir(), value = TRUE))
+      if (dir.exists('svaOut')) unlink('svaOut', recursive = TRUE, force = TRUE)
+      dir.create('svaOut')
+      if (file.exists('tmpOut.csv')) file.remove('tmpOut.csv')
+      tmpOut <- getData()
+      names(tmpOut) <- gsub("\\.", ":", names(tmpOut))
+      write.csv(tmpOut, file = 'tmpOut.csv', na = "", row.names = FALSE)
+      svaCall <- paste('smartva', '--country', input$svaCountry,
+                       '--hiv', ifelse(input$svaHIV, 'True', 'False'),
+                       '--malaria', ifelse(input$svaMalaria, 'True', 'False'),
+                       '--hce', ifelse(input$svaHCE, 'True', 'False'),
+                       '--freetext', ifelse(input$svaFreeText, 'True', 'False'),
+                       '--figures False',
+                       'tmpOut.csv', 'svaOut')
+      system(svaCall)
+      
+      # render demographic table
+      indCOD <- read.csv('svaOut/1-individual-cause-of-death/individual-cause-of-death.csv',
+                         stringsAsFactors = FALSE)
+      all <- rep(TRUE, nrow(indCOD))
+      adult <- rep(FALSE, nrow(indCOD))
+      adult[indCOD$age >= 12] <- TRUE
+      child <- rep(FALSE, nrow(indCOD))
+      child[indCOD$age < 12 & indCOD$age >= 29/365.25] <- TRUE
+      neonate <- rep(FALSE, nrow(indCOD))
+      neonate[indCOD$age < 29/365.25] <- TRUE
+      ageGroup <- rep(NA, nrow(indCOD))
+      ageGroup[neonate] <- "neonate"
+      ageGroup[child]  <- "child"
+      ageGroup[adult]  <- "ages >11"
+      female <- rep(FALSE, nrow(indCOD))
+      female[indCOD$sex == 2] <- TRUE
+      male <- rep(FALSE, nrow(indCOD))
+      male[indCOD$sex == 1] <- TRUE
+      
+      counts <- c(length(male[male]), length(female[female]),
+                  length(neonate[neonate]), length(child[child]),
+                  length(adult[adult]),
+                  nrow(records) - nrow(indCOD),
+                  nrow(records))
+      if(file.exists("plotAgeDist.pdf")) file.remove("plotAgeDist.pdf")
+      pdf("plotAgeDist.pdf")
+      barplot(table(ageGroup), horiz = TRUE, main="Age Distribution", xlab="Counts")
+      dev.off()
+      output$downloadAgeDist <- downloadHandler(
+        filename = "plotAgeDist.pdf",
+        content = function(file) {
+          file.copy("plotAgeDist.pdf", file)
         }
-        downloadPlot <- paste0('downloadPlot', namesNumericCodes[tmpNameRun])
-        output[[downloadPlot]] <- downloadHandler(
-          filename = plotName,
-          content = function(file) {
-            if(!is.null(rv[[rvName]])){
-              file.copy(plotName, file)
-            }
-          }
-        )
-        titlePlot <- paste0("titlePlot", groupName)
-        output[[titlePlot]] <- renderText({
-          paste("CSMF Plot for", groupName, "Records")
-        })
-        plotGrp <- paste0("plot", groupName)
-        output[[plotGrp]] <- renderPlot({
-          if (!is.null(rv[[rvName]])) {
-            plotVA(rv[[rvName]], top = newTop)
-          }
-        })
-        # Download individual cause assignments
-        downloadCOD <- paste0('downloadCOD', namesNumericCodes[tmpNameRun])
-        output[[downloadCOD]] <- downloadHandler(
-          filename = paste0("individual-causes-", namesRuns[i], "-", input$algorithm, "-", Sys.Date(), ".csv"),
-          content = function(file) {
-            if(!is.null(rv[[rvName]])){
-              write.csv(rv$indivCOD, file = file, row.names = FALSE)
-            }
-          }
-        )
-        downloadData <- paste0('downloadData', namesNumericCodes[tmpNameRun])
-        output[[downloadData]] <- downloadHandler(
-          filename = paste0("results-", namesRuns[i], "-", input$algorithm, "-", Sys.Date(), ".csv"),
-          content = function(file) {
-            if(!is.null(rv[[rvName]])){
-              write.csv(print(summary(rv[[rvName]], top = newTop)), file = file)
-            }
-          }
-        )
-        downloadWarnings <- paste0('downloadWarnings', namesNumericCodes[tmpNameRun])
-        warningFileName <- paste(input$algorithm, "warnings", namesRuns[i], ".txt", sep = "-")
-        if(file.exists(warningFileName)) file.remove(warningFileName)
-        file.create(warningFileName)
-        cat("Warnings and Errors from", input$algorithm, "\t", namesRuns[i], "\t", date(),
-            "\n", file = warningFileName)
-        ovaLogFileName <- ifelse(input$algorithm == "InSilicoVA",
-                                 paste0(tmpDirResults[i], "/errorlog_insilico.txt"),
-                                 paste0(tmpDirResults[i], "/errorlogV5.txt"))
-        file.append(warningFileName, ovaLogFileName)
-        #unlink(ovaLogFileName, recursive = TRUE, force = TRUE)
-        output[[downloadWarnings]] <- downloadHandler(
-          filename = paste(input$algorithm, "warnings", namesRuns[i], ".txt", sep = "-"),
-          content = function(file) {
-            if(!is.null(rv[[rvName]])){
-              file.copy(warningFileName, file)
-            }
-          }
-        )
+      )
+      # render results
+      svaCSMF <- read.csv('svaOut/2-csmf/csmf.csv', stringsAsFactors = FALSE)
+      if (input$byAll & nrow(indCOD) > 0) {
+        rv$fitAll <- svaCSMF[order(svaCSMF[, 'all'], decreasing = TRUE), 
+                             c('cause34', 'all')]
+        names(rv$fitAll) <- c('cause34', 'csmf')
+        rownames(rv$fitAll) <- NULL
       }
-      if(is.null(rv[[rvName]])) rv[[tmpNameRun]] <- NULL
-    })
+      if (input$bySex & length(male[male]) > 0) {
+        rv$fitMale <- svaCSMF[order(svaCSMF[, 'male'], decreasing = TRUE), 
+                             c('cause34', 'male')]
+        names(rv$fitMale) <- c('cause34', 'csmf')
+        rownames(rv$fitMale) <- NULL
+      }
+      if (input$bySex & length(female[female]) > 0) {
+        rv$fitFemale <- svaCSMF[order(svaCSMF[, 'female'], decreasing = TRUE), 
+                                c('cause34', 'female')]
+        names(rv$fitFemale) <- c('cause34', 'csmf')
+        rownames(rv$fitFemale) <- NULL
+      }
+      if (input$byAge & length(neonate[neonate]) > 0) {
+        svaCSMFNeo <- read.csv('svaOut/2-csmf/neonate-csmf.csv', stringsAsFactors = FALSE)
+        rv$fitNeonate <- svaCSMFNeo[order(svaCSMFNeo[, 'all'], decreasing = TRUE), 
+                                    c('cause34', 'all')]
+        names(rv$fitNeonate) <- c('cause34', 'csmf')
+        rownames(rv$fitNeonate) <- NULL
+      }
+      if (input$byAge & length(child[child]) > 0) {
+        svaCSMFChild <- read.csv('svaOut/2-csmf/child-csmf.csv', stringsAsFactors = FALSE)
+        rv$fitChild <- svaCSMFNeo[order(svaCSMFChild[, 'all'], decreasing = TRUE), 
+                                  c('cause34', 'all')]
+        names(rv$fitChild) <- c('cause34', 'csmf')
+        rownames(rv$fitChild) <- NULL
+      }
+      if (input$byAge & length(adult[adult]) > 0) {
+        svaCSMFAdult <- read.csv('svaOut/2-csmf/adult-csmf.csv', stringsAsFactors = FALSE)
+        rv$fitAdult <- svaCSMFAdult[order(svaCSMFAdult[, 'all'], decreasing = TRUE), 
+                                    c('cause34', 'all')]
+        names(rv$fitAdult) <- c('cause34', 'csmf')
+        rownames(rv$fitAdult) <- NULL
+      }
+      
+      lapply(1:length(namesRuns), function (i) {
+        
+        tmpNameRun <- namesRuns[i]
+        groupName <- gsub('^(.)', '\\U\\1', tmpNameRun, perl = TRUE)
+        rvName <- paste0("fit", groupName)
+        
+        titleDescriptiveStats <- paste0("titleDescriptiveStats", groupName)
+        output[[titleDescriptiveStats]] <- renderText({
+          "Counts of Deaths by Sex & Age"
+        })
+        descriptiveStatsName <- paste0("descriptiveStats", groupName)
+        output[[descriptiveStatsName]] <- renderTable({
+          if (!is.null(counts)) {
+            matrix(counts, nrow=1, ncol=7,
+                   dimnames = list(c("# of Deaths"),
+                                   c("Male", "Female",
+                                     "Neonate", "Child", "Ages >11",
+                                     "Age is Missing", "Total")))
+          }
+        })
+        if (!is.null(rv[[rvName]])) {
+          newTop <- min(input$topDeaths, sum(rv[[rvName]]$csmf > 0))
+          # CSMF Summary
+          titleSummary <- paste0("titleSummary", groupName)
+          titleSummaryText <- paste("Summary of Results using", groupName, "Records")
+          output[[titleSummary]] <- renderText({
+            paste("Tariff2: CSMF calculated using", groupName, "Records")
+          })
+          summaryGrp <- paste0("summary", groupName)
+          output[[summaryGrp]] <- renderPrint({
+            print(rv[[rvName]][1:newTop,], right = FALSE, row.names = FALSE)
+          })
+          # CSMF Plot
+          plotName <- paste0("plot-", tmpNameRun, "-", input$algorithm, "-", Sys.Date(), ".pdf")
+          if (file.exists(plotName)) file.remove(plotName)
+          pdf(plotName)
+          barplot(height = rev(rv[[rvName]]$csmf[1:newTop]), horiz = TRUE,
+                  names = gsub(' ', ' \n ', rev(rv[[rvName]]$cause34[1:newTop])),
+                  col = grey.colors(length(rv[[rvName]]$csmf[1:newTop])),
+                  las = 1, cex.names = .8, tcl = -0.2,
+                  mar = c(5, 25, 4, 2), mgp = c(3, .25, 0))
+          dev.off()
+          downloadPlot <- paste0('downloadPlot', namesNumericCodes[tmpNameRun])
+          output[[downloadPlot]] <- downloadHandler(
+            filename = plotName,
+            content = function(file) {
+              if(!is.null(rv[[rvName]])){
+                file.copy(plotName, file)
+              }
+            }
+          )
+          titlePlot <- paste0("titlePlot", groupName)
+          output[[titlePlot]] <- renderText({
+            paste("CSMF Plot for", groupName, "Records")
+          })
+          plotGrp <- paste0("plot", groupName)
+          output[[plotGrp]] <- renderPlot({
+            barplot(height = rev(rv[[rvName]]$csmf[1:newTop]), horiz = TRUE,
+                    names = gsub(' ', ' \n ', rev(rv[[rvName]]$cause34[1:newTop])),
+                    col = grey.colors(length(rv[[rvName]]$csmf[1:newTop])),
+                    las = 1, cex.names = .8, tcl = -0.2, 
+                    mar = c(5, 25, 4, 2), mgp = c(3, .25, 0))
+          })
+          # Download individual cause assignments
+          downloadCOD <- paste0('downloadCOD', namesNumericCodes[tmpNameRun])
+          output[[downloadCOD]] <- downloadHandler(
+            filename = paste0("individual-causes-", namesRuns[i], "-", input$algorithm, "-", Sys.Date(), ".csv"),
+            content = function(file) {
+              write.csv(indCOD[get(namesRuns[i]),], file = file, row.names = FALSE)
+            }
+          )
+          downloadData <- paste0('downloadData', namesNumericCodes[tmpNameRun])
+          output[[downloadData]] <- downloadHandler(
+            filename = paste0("results-", namesRuns[i], "-", input$algorithm, "-", Sys.Date(), ".csv"),
+            content = function(file) {
+              write.csv(print(rv[[rvName]]), file = file)
+            }
+          )
+        }
+        titleSummary <- paste0("titleSummary", groupName)
+        emptySummary <- paste0("emptySummary", groupName)
+        if (is.null(rv[[rvName]])) {
+          output[[titleSummary]] <- renderText({
+            paste("No Summary for", groupName, "(not enough deaths for analysis)")
+          })
+        } 
+        if(is.null(rv[[rvName]])) rv[[tmpNameRun]] <- NULL
+      })
+      if (dir.exists('fontconfig')) unlink('fontconfig', recursive = TRUE, force = TRUE)
+    }
     progress$close()
     
     shinyjs::enable("processMe")
     shinyjs::enable("algorithm")
     shinyjs::enable("downloadAgeDist")
-    if(input$byAll){
+    if (input$byAll) {
       shinyjs::enable("downloadPlot1")
       shinyjs::enable("downloadCOD1")
       shinyjs::enable("downloadData1")
-      shinyjs::enable("downloadWarnings1")
+      if (input$algorithm == "InSilicoVA" | input$algorithm == "InterVA5") {
+        shinyjs::enable("downloadWarnings1")
+      }
     }
-    if(input$bySex & length(male[male])>0){
+    if (input$bySex & length(male[male]) > 0) {
       shinyjs::enable("downloadPlot2")
       shinyjs::enable("downloadCOD2")
       shinyjs::enable("downloadData2")
-      shinyjs::enable("downloadWarnings2")
+      if (input$algorithm == "InSilicoVA" | input$algorithm == "InterVA5") {
+        shinyjs::enable("downloadWarnings2")
+      }
     }
-    if(input$bySex & length(female[female])>0){
+    if (input$bySex & length(female[female]) > 0) {
       shinyjs::enable("downloadPlot3")
       shinyjs::enable("downloadCOD3")
       shinyjs::enable("downloadData3")
-      shinyjs::enable("downloadWarnings3")
+      if (input$algorithm == "InSilicoVA" | input$algorithm == "InterVA5") {
+        shinyjs::enable("downloadWarnings3")
+      }
     }
-    if(input$byAge & length(neonate[neonate])>0){
+    if (input$byAge & length(neonate[neonate]) > 0) {
       shinyjs::enable("downloadPlot4")
       shinyjs::enable("downloadCOD4")
       shinyjs::enable("downloadData4")
-      shinyjs::enable("downloadWarnings4")
+      if (input$algorithm == "InSilicoVA" | input$algorithm == "InterVA5") {
+        shinyjs::enable("downloadWarnings4")
+      }
     }
-    if(input$byAge & length(child[child])>0){
+    if (input$byAge & length(child[child]) > 0) {
       shinyjs::enable("downloadPlot5")
       shinyjs::enable("downloadCOD5")
       shinyjs::enable("downloadData5")
-      shinyjs::enable("downloadWarnings5")
+      if (input$algorithm == "InSilicoVA" | input$algorithm == "InterVA5") {
+        shinyjs::enable("downloadWarnings5")
+      }
     }
-    if(input$byAge & length(adult[adult])>0){
+    if (input$byAge & length(adult[adult]) > 0) {
       shinyjs::enable("downloadPlot6")
       shinyjs::enable("downloadCOD6")
       shinyjs::enable("downloadData6")
-      shinyjs::enable("downloadWarnings6")
+      if (input$algorithm == "InSilicoVA" | input$algorithm == "InterVA5") {
+        shinyjs::enable("downloadWarnings6")
+      }
     }
   })
   
   output$downloadWarnings <- downloadHandler(
     filename = warningFileName,
     content = function(file) {
-      file.copy(filename, file)
+        file.copy(filename, file)
     }
   )
   # disable download button on page load

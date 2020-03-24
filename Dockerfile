@@ -34,14 +34,19 @@ RUN R -e "install.packages(c('glue', 'shinyjs', 'openVA', 'CrossVA'), repos='htt
 RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/openVA_App
 RUN R CMD INSTALL /home/shiny/GitHub/openVA_App/pkg
 
-## NEED TO CHANGE WORKING DIRECTORY
-RUN mkdir /srv/shiny-server/openVAapp
-RUN echo "appDir <- system.file('app', package = 'openVAapp'); library(openVAapp); shinyAppDir(appDir)" > /srv/shiny-server/openVAapp/app.R
+# Set up SmartVA-Analyze
+RUN cd /usr/local/lib/R/site-library/openVAapp/app; \
+    curl -L https://github.com/ihmeuw/SmartVA-Analyze/releases/download/v2.0.0/smartva -o smartva; \
+    chmod 755 smartva
+
+# Set up app
+RUN mkdir /srv/shiny-server/openVA_App
+RUN echo "appDir <- system.file('app', package = 'openVAapp'); library(openVAapp); shinyAppDir(appDir)" > /srv/shiny-server/openVA_App/app.R
 RUN chown -R shiny:shiny /srv/shiny-server
 RUN chown -R shiny:shiny /usr/local/lib/R/site-library/openVAapp
 
 # Start container with:
-# docker run --rm --user shiny -p 3838:3838 -v /srv/shinylog/:/var/log/shiny-server/ openva_app
+# docker run --rm --user shiny -p 3838:3838 -v /srv/shinylog/:/var/log/shiny-server/ openVA_App
 
 # Open app at:
 # localhost:3838/openVAapp
