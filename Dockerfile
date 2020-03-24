@@ -35,9 +35,9 @@ RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/
 RUN R CMD INSTALL /home/shiny/GitHub/openVA_App/pkg
 
 # Set up SmartVA-Analyze
-RUN cd /usr/local/lib/R/site-library/openVAapp/app; \
-    curl -L https://github.com/ihmeuw/SmartVA-Analyze/releases/download/v2.0.0/smartva -o smartva; \
-    chmod 755 smartva
+RUN wget -P /opt/SmartVA https://github.com/ihmeuw/SmartVA-Analyze/releases/download/v2.0.0/smartva
+RUN chmod 755 /opt/SmartVA/smartva
+ENV PATH="/opt/SmartVA:${PATH}"
 
 # Set up app
 RUN mkdir /srv/shiny-server/openVA_App
