@@ -71,6 +71,7 @@ CSMF2 <- function (x, top) {
 #'
 #' @return A list of country names and abbreviations.
 #'
+#' @noRd
 smartVA_countries <- function () {
   c(
     "Unknown" = "Unknown",

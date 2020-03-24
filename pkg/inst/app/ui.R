@@ -49,7 +49,7 @@ ui <- fluidPage(
                                              "h (high: >= 1% of all deaths)" = "h"), width="300px")),
       conditionalPanel(condition="input.algorithm=='Tariff2'",
                        selectInput(inputId = "svaCountry", label = "Country",
-                                   choices = smartVA_countries(),
+                                   choices = openVAapp:::smartVA_countries(),
                                    width="300px")),
       conditionalPanel(condition="input.algorithm=='Tariff2'",
                        checkboxInput("svaHIV", "HIV region", FALSE)),
