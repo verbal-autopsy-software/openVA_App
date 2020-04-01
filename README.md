@@ -1,42 +1,24 @@
-# openVA_App
+# openVA app
 
-Analyze Verbal Autopsy (VA) data with the InSilicoVA & InterVA algorithms using `shiny-openVA.R`, which  builds a web app with the 
-**R** package [Shiny](https://cran.r-project.org/web/packages/shiny/index.html).  The app can process VA data from the 2016 WHO VA
-instrument (versions 1.4.1 and 1.5.1).  Data from an Open Data Kit (ODK) Briefcase export are also accepted formats for the app.
+Analyze Verbal Autopsy (VA) data with the InSilicoVA, InterVA5, and Tariff2 algorithms using the openVA app, available from this repository
+in the form of an R package (in the pkg folder).  The app can process VA data from the 2016 WHO VA instrument (versions 1.4.1 and 1.5.1) and
+the PHMRC Shortened Questionnaire.  Results are rendered in the app and can be saved in CSV and PDF formats.  The openVA app and all the
+dependencies are also available as a Docker image at
+[https://hub.docker.com/r/openvateam/openva_app](https://hub.docker.com/r/openvateam/openva_app).
 
-## Installation
+## Installing and Running openVA app
 
-The dependencies for openVA_App include Java, and R, as well as several **R** packages.  
+The dependencies for the openVA app include R, Java, and Python (*both* versions 2.7 and >=3.6).  
 
-To run openVA_App: (1) download the files `shiny-openVA.R`; (2) install Java Development Kit; 
+To run the openVA app: (1) install Java Development Kit; (2) install Python 2.7 and Python 3.6;
 (3) install [**R**](https://cran.r-project.org/); and (4) start **R** and install the necessary packages with the following command:
 
 ```r
-install.packages(c("openVA", "shinyjs", "CrossVA"), dependencies = TRUE)
+install.packages(c("openVA", "shinyjs", "devtools"), dependencies = TRUE)
+devtools::install_github('verbal-autopys-software/openVA_App', subdir = 'pkg')
+library(openVAapp)
+launchApp()
 ```
-
-*Notes* 
-
-- The app depends on [**CrossVA** ](https://cran.r-project.org/package=CrossVA) **version 0.9.3** as well as version 1.2.5
-of the **R** package [InSilicoVA](https://github.com/verbal-autopsy-software/InSilicoVA) package. To update a previously
-installed versions of these packages, run the following command at the **R** prompt (which may ask you to select a CRAN 
-mirror and to confirm the update of each package for which you have administrative privileges):
-
-  ```r
-  ## update all packages and have R ask about updates for each package:
-  update.packages()
-  ## update all packages without confirmation
-  ## update.packages(ask = FALSE)
-  ```
-
-## Usage
-
-After installing the dependencies, open the file `shiny-openVA.R` in R, select all of the code and execute it.  This repo 
-has two example ODK Briefcase exported data sets (_odkBriefcaseExport.csv_) and (_who151_odk_export.csv_), which can be used 
-by the Shiny app.  When running InterVA5 or InSilico2016, users can specify the version of the 2016 WHO VA Questionnaire
-used to collected the data.  The file (_odkBriefcaseExport.csv_) is an example of version 1.4.1 of the 2016
-WHO VA Questionnaire, while the file (_who151_odk_export.csv_) is an example of version 1.5.1.  The shiny app will appear 
-in your default web browser.  See the [vignette](https://github.com/verbal-autopsy-software/shinyVA/blob/master/shiny-openVA-vignette.pdf) for more details.  _Note: The vignette needs to be updated, and may not reflect the current state of the shiny app._
 
 
 ## Troubleshooting
@@ -70,10 +52,6 @@ InSilicoVA depends on the **R** package rJava.  It is common to run into problem
   more information on setting Environment Variables in windows see: 
   [https://www.java.com/en/download/help/path.xml](https://www.java.com/en/download/help/path.xml).
 
-## To Do
-
-- update vignette
-- add support for Tariff and WHO VA instrument
 
 ## Licence
 GNU General Public License v3.0
