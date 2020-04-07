@@ -1,6 +1,6 @@
 #' @import shiny
 server <- function(input, output, session) {
-  
+
   ## Read in data
   getData <- reactive({
     vaData <- input$readIn
@@ -13,7 +13,7 @@ server <- function(input, output, session) {
     return(!is.null(getData()))
   })
   outputOptions(output, "fileUploaded", suspendWhenHidden = FALSE)
-  
+
   selectedAlgorithm <- reactive({
     # validate(
     #   need(compareVersion("0.9.3", packageDescription("CrossVA")$Version) <= 0,
@@ -22,7 +22,7 @@ server <- function(input, output, session) {
     switch(input$algorithm,
            "InSilicoVA" = 1, "InterVA5" = 2)
   })
-  
+
   ## Run model
   rv <- reactiveValues()
   rv$male     <- TRUE
@@ -30,25 +30,25 @@ server <- function(input, output, session) {
   rv$neonate  <- TRUE
   rv$child    <- TRUE
   rv$adult    <- TRUE
-  
+
   observeEvent(input$processMe, {
-    
+
     if (names(dev.cur()) != "null device") dev.off()
     fileNames <- dir(system.file('app', package = 'shinyVA'))
     filesToRemove <- grepl("plot|*warnings*|VA_results", fileNames)
     if (sum(filesToRemove) > 0) {
-      file.remove(paste(system.file('app', package = 'shinyVA'), 
-                        fileNames[filesToRemove], 
+      file.remove(paste(system.file('app', package = 'shinyVA'),
+                        fileNames[filesToRemove],
                         sep = "/"))
     }
-    
+
     rv$fitAll     <- NULL
     rv$fitMale    <- NULL
     rv$fitFemale  <- NULL
     rv$fitNeonate <- NULL
     rv$fitChild   <- NULL
     rv$fitAdult   <- NULL
-    
+
     shinyjs::disable("processMe")
     shinyjs::disable("algorithm")
     shinyjs::disable("downloadAgeDist")
@@ -76,11 +76,11 @@ server <- function(input, output, session) {
     shinyjs::disable("downloadWarnings4")
     shinyjs::disable("downloadWarnings5")
     shinyjs::disable("downloadWarnings6")
-    
+
     progress <- shiny::Progress$new()
     progress$set(message = paste("Starting openVA...(this may take a while)"),
                  value = 1/6)
-    
+
     # set up objects needed to loop through all the calls to openVA
     if (input$algorithm == "InSilicoVA") {
       burn <- round(input$simLength / 2)
@@ -111,18 +111,18 @@ server <- function(input, output, session) {
     lapply(tmpDirResults, function (i) {dir.create(i)})
     # read in data
     if(input$odkBC & input$algorithm != 'Tariff2'){
-      records <- CrossVA::odk2openVA(getData())
-      records$ID <- getData()$meta.instanceID
-      # write.csv(getData(), file = 'tmpOut.csv', row.names = FALSE)
-      # pyAlg <- ifelse(input$algorithm == "InSilicoVA", "InsillicoVA", "InterVA5")
-      # pyCall <- paste0('/usr/local/bin/pycrossva-transform AUTODETECT ',
-      #                  'InterVA5', ' tmpOut.csv --dst pyOut.csv')
-      # system(pyCall)
-      # records <- read.csv('pyOut.csv', stringsAsFactors = FALSE)
+      ## records <- CrossVA::odk2openVA(getData())
+      ## records$ID <- getData()$meta.instanceID
+      write.csv(getData(), file = 'tmpOut.csv', row.names = FALSE)
+      pyAlg <- ifelse(input$algorithm == "InSilicoVA", "InsillicoVA", "InterVA5")
+      pyCall <- paste0('/usr/local/bin/pycrossva-transform AUTODETECT ',
+                       'InterVA5', ' tmpOut.csv --dst pyOut.csv')
+      system(pyCall)
+      records <- read.csv('pyOut.csv', stringsAsFactors = FALSE)
     } else{
       records <- getData()
     }
-    
+
     # object needed to render table of demographic variables
     names(records) <- tolower(names(records))
     whoData <- "i004a" %in% names(records)
@@ -141,12 +141,12 @@ server <- function(input, output, session) {
     adult[records$i022a == "y"] <- TRUE
     adult[records$i022b == "y"] <- TRUE
     adult[records$i022c == "y"] <- TRUE
-    
+
     ageGroup <- rep(NA, length(records$i022a))
     ageGroup[neonate] <- "neonate"
     ageGroup[child]  <- "child"
     ageGroup[adult]  <- "ages >14"
-    
+
     counts <- c(length(male[male]), length(female[female]),
                 length(neonate[neonate]), length(child[child]),
                 length(adult[adult]),
@@ -178,7 +178,7 @@ server <- function(input, output, session) {
       vaOut <- list(all = NULL, male = NULL, female = NULL,
                     neonate = NULL, child = NULL, adult = NULL)
       parallel::clusterExport(cl,
-                              varlist = c("namesRuns", "tmpDirResults", "modelArgs", 
+                              varlist = c("namesRuns", "tmpDirResults", "modelArgs",
                                           "records", "all", "male", "female",
                                           "neonate", "child", "adult"),
                               envir = environment())
@@ -193,14 +193,14 @@ server <- function(input, output, session) {
       parallel::stopCluster(cl)
       progress$set(message = "done with analyses", value = 5/6)
       names(vaOut) <- namesRuns
-      
+
       lapply(1:length(namesRuns), function (i) {
-        
+
         tmpNameRun <- namesRuns[i]
         groupName <- gsub('^(.)', '\\U\\1', tmpNameRun, perl = TRUE)
         rvName <- paste0("fit", groupName)
         rv[[rvName]] <- vaOut[[tmpNameRun]]
-        
+
         titleDescriptiveStats <- paste0("titleDescriptiveStats", groupName)
         output[[titleDescriptiveStats]] <- renderText({
           "Counts of Deaths by Sex & Age"
@@ -215,19 +215,19 @@ server <- function(input, output, session) {
                                      "Age is Missing", "Total")))
           }
         })
-        
+
         # produce outputs
         if (!is.null(rv[[rvName]])) {
-          
+
           rv$indivCOD <- indivCOD(rv[[rvName]], top = 3)
-          
+
           if (input$algorithm == "InSilicoVA" ) {
             orderedCSMF <- summary(rv[[rvName]])$csmf.ordered[, 1]
           } else {
             orderedCSMF <- summary(rv[[rvName]])$csmf.ordered[, 2]
           }
           newTop <- min(input$topDeaths, sum(orderedCSMF > 0))
-          
+
           # CSMF Summary
           titleSummary <- paste0("titleSummary", groupName)
           output[[titleSummary]] <- renderText({
@@ -333,7 +333,7 @@ server <- function(input, output, session) {
                        '--figures False',
                        'tmpOut.csv', 'svaOut')
       system(svaCall)
-      
+
       # render demographic table
       indCOD <- read.csv('svaOut/1-individual-cause-of-death/individual-cause-of-death.csv',
                          stringsAsFactors = FALSE)
@@ -352,7 +352,7 @@ server <- function(input, output, session) {
       female[indCOD$sex == 2] <- TRUE
       male <- rep(FALSE, nrow(indCOD))
       male[indCOD$sex == 1] <- TRUE
-      
+
       counts <- c(length(male[male]), length(female[female]),
                   length(neonate[neonate]), length(child[child]),
                   length(adult[adult]),
@@ -371,51 +371,51 @@ server <- function(input, output, session) {
       # render results
       svaCSMF <- read.csv('svaOut/2-csmf/csmf.csv', stringsAsFactors = FALSE)
       if (input$byAll & nrow(indCOD) > 0) {
-        rv$fitAll <- svaCSMF[order(svaCSMF[, 'all'], decreasing = TRUE), 
+        rv$fitAll <- svaCSMF[order(svaCSMF[, 'all'], decreasing = TRUE),
                              c('cause34', 'all')]
         names(rv$fitAll) <- c('cause34', 'csmf')
         rownames(rv$fitAll) <- NULL
       }
       if (input$bySex & length(male[male]) > 0) {
-        rv$fitMale <- svaCSMF[order(svaCSMF[, 'male'], decreasing = TRUE), 
+        rv$fitMale <- svaCSMF[order(svaCSMF[, 'male'], decreasing = TRUE),
                              c('cause34', 'male')]
         names(rv$fitMale) <- c('cause34', 'csmf')
         rownames(rv$fitMale) <- NULL
       }
       if (input$bySex & length(female[female]) > 0) {
-        rv$fitFemale <- svaCSMF[order(svaCSMF[, 'female'], decreasing = TRUE), 
+        rv$fitFemale <- svaCSMF[order(svaCSMF[, 'female'], decreasing = TRUE),
                                 c('cause34', 'female')]
         names(rv$fitFemale) <- c('cause34', 'csmf')
         rownames(rv$fitFemale) <- NULL
       }
       if (input$byAge & length(neonate[neonate]) > 0) {
         svaCSMFNeo <- read.csv('svaOut/2-csmf/neonate-csmf.csv', stringsAsFactors = FALSE)
-        rv$fitNeonate <- svaCSMFNeo[order(svaCSMFNeo[, 'all'], decreasing = TRUE), 
+        rv$fitNeonate <- svaCSMFNeo[order(svaCSMFNeo[, 'all'], decreasing = TRUE),
                                     c('cause34', 'all')]
         names(rv$fitNeonate) <- c('cause34', 'csmf')
         rownames(rv$fitNeonate) <- NULL
       }
       if (input$byAge & length(child[child]) > 0) {
         svaCSMFChild <- read.csv('svaOut/2-csmf/child-csmf.csv', stringsAsFactors = FALSE)
-        rv$fitChild <- svaCSMFNeo[order(svaCSMFChild[, 'all'], decreasing = TRUE), 
+        rv$fitChild <- svaCSMFNeo[order(svaCSMFChild[, 'all'], decreasing = TRUE),
                                   c('cause34', 'all')]
         names(rv$fitChild) <- c('cause34', 'csmf')
         rownames(rv$fitChild) <- NULL
       }
       if (input$byAge & length(adult[adult]) > 0) {
         svaCSMFAdult <- read.csv('svaOut/2-csmf/adult-csmf.csv', stringsAsFactors = FALSE)
-        rv$fitAdult <- svaCSMFAdult[order(svaCSMFAdult[, 'all'], decreasing = TRUE), 
+        rv$fitAdult <- svaCSMFAdult[order(svaCSMFAdult[, 'all'], decreasing = TRUE),
                                     c('cause34', 'all')]
         names(rv$fitAdult) <- c('cause34', 'csmf')
         rownames(rv$fitAdult) <- NULL
       }
-      
+
       lapply(1:length(namesRuns), function (i) {
-        
+
         tmpNameRun <- namesRuns[i]
         groupName <- gsub('^(.)', '\\U\\1', tmpNameRun, perl = TRUE)
         rvName <- paste0("fit", groupName)
-        
+
         titleDescriptiveStats <- paste0("titleDescriptiveStats", groupName)
         output[[titleDescriptiveStats]] <- renderText({
           "Counts of Deaths by Sex & Age"
@@ -470,7 +470,7 @@ server <- function(input, output, session) {
             barplot(height = rev(rv[[rvName]]$csmf[1:newTop]), horiz = TRUE,
                     names = gsub(' ', ' \n ', rev(rv[[rvName]]$cause34[1:newTop])),
                     col = grey.colors(length(rv[[rvName]]$csmf[1:newTop])),
-                    las = 1, cex.names = .8, tcl = -0.2, 
+                    las = 1, cex.names = .8, tcl = -0.2,
                     mar = c(5, 25, 4, 2), mgp = c(3, .25, 0))
           })
           # Download individual cause assignments
@@ -495,13 +495,13 @@ server <- function(input, output, session) {
           output[[titleSummary]] <- renderText({
             paste("No Summary for", groupName, "(not enough deaths for analysis)")
           })
-        } 
+        }
         if(is.null(rv[[rvName]])) rv[[tmpNameRun]] <- NULL
       })
       if (dir.exists('fontconfig')) unlink('fontconfig', recursive = TRUE, force = TRUE)
     }
     progress$close()
-    
+
     shinyjs::enable("processMe")
     shinyjs::enable("algorithm")
     shinyjs::enable("downloadAgeDist")
@@ -554,7 +554,7 @@ server <- function(input, output, session) {
       }
     }
   })
-  
+
   output$downloadWarnings <- downloadHandler(
     filename = warningFileName,
     content = function(file) {
