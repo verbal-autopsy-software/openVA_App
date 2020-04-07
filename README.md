@@ -15,10 +15,13 @@ To run the openVA app: (1) install Java Development Kit; (2) install Python 2.7 
 
 ```r
 install.packages(c("openVA", "shinyjs", "devtools"), dependencies = TRUE)
-devtools::install_github('verbal-autopys-software/openVA_App', subdir = 'pkg')
+devtools::install_github('verbal-autopys-software/openVA_App', subdir = 'pkg', INSTALL_opts=c('--no-multiarch'))
 library(openVAapp)
 launchApp()
 ```
+
+R may ask if you would like to update some of the packages openVA app depends on; you can type in the number for
+the option you choose (e.g., 1: All, 2: CRAN packages only; 3: None). 
 
 
 ## Troubleshooting
