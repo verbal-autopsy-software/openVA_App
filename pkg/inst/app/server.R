@@ -78,8 +78,11 @@ server <- function(input, output, session) {
     shinyjs::disable("downloadWarnings6")
 
     progress <- shiny::Progress$new()
-    progress$set(message = paste("Starting openVA...(this may take a while)"),
-                 value = 1/6)
+    msg <- paste("Starting openVA...(this may take a while)")
+    if (input$algorithm == "Tariff2") {
+        msg <- paste("Starting SmartVA-Analyze...(this may take a while)")
+    }
+    progress$set(message = msg, value = 1/6)
 
     # set up objects needed to loop through all the calls to openVA
     if (input$algorithm == "InSilicoVA") {
@@ -317,6 +320,7 @@ server <- function(input, output, session) {
         if(is.null(rv[[rvName]])) rv[[tmpNameRun]] <- NULL
       })
     }
+    # Tariff2
     if (input$algorithm == "Tariff2"){
       file.remove(grep('plot-.*-Tariff2', dir(), value = TRUE))
       if (dir.exists('svaOut')) unlink('svaOut', recursive = TRUE, force = TRUE)
@@ -397,7 +401,7 @@ server <- function(input, output, session) {
       }
       if (input$byAge & length(child[child]) > 0) {
         svaCSMFChild <- read.csv('svaOut/2-csmf/child-csmf.csv', stringsAsFactors = FALSE)
-        rv$fitChild <- svaCSMFNeo[order(svaCSMFChild[, 'all'], decreasing = TRUE),
+        rv$fitChild <- svaCSMFChild[order(svaCSMFChild[, 'all'], decreasing = TRUE),
                                   c('cause34', 'all')]
         names(rv$fitChild) <- c('cause34', 'csmf')
         rownames(rv$fitChild) <- NULL
@@ -447,9 +451,9 @@ server <- function(input, output, session) {
           if (file.exists(plotName)) file.remove(plotName)
           pdf(plotName)
           barplot(height = rev(rv[[rvName]]$csmf[1:newTop]), horiz = TRUE,
-                  names = gsub(' ', ' \n ', rev(rv[[rvName]]$cause34[1:newTop])),
+                  names = gsub(' |\\/', '\n', rev(rv[[rvName]]$cause34[1:newTop])),
                   col = grey.colors(length(rv[[rvName]]$csmf[1:newTop])),
-                  las = 1, cex.names = .8, tcl = -0.2,
+                  las = 1, cex.names = .75, tcl = -0.2,
                   mar = c(5, 25, 4, 2), mgp = c(3, .25, 0))
           dev.off()
           downloadPlot <- paste0('downloadPlot', namesNumericCodes[tmpNameRun])
@@ -468,9 +472,9 @@ server <- function(input, output, session) {
           plotGrp <- paste0("plot", groupName)
           output[[plotGrp]] <- renderPlot({
             barplot(height = rev(rv[[rvName]]$csmf[1:newTop]), horiz = TRUE,
-                    names = gsub(' ', ' \n ', rev(rv[[rvName]]$cause34[1:newTop])),
+                    names = gsub(' |\\/', '\n', rev(rv[[rvName]]$cause34[1:newTop])),
                     col = grey.colors(length(rv[[rvName]]$csmf[1:newTop])),
-                    las = 1, cex.names = .8, tcl = -0.2,
+                    las = 1, cex.names = .75, tcl = -0.2,
                     mar = c(5, 25, 4, 2), mgp = c(3, .25, 0))
           })
           # Download individual cause assignments

@@ -24,14 +24,14 @@ RUN apt-get update && apt-get install -y \
 RUN cd /opt; wget https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz
 RUN cd /opt; tar -xf Python-3.7.5.tgz; cd Python-3.7.5; ./configure --enable-optimizations --enable-shared; sudo make altinstall
 RUN mkdir /home/shiny/GitHub
-RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/pyCrossVA
+RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/pyCrossVA -b openVA_App 
 RUN sudo ldconfig /usr/local/lib
 RUN pip3.7 install pip setuptools wheel --upgrade
 RUN pip3.7 install -r /home/shiny/GitHub/pyCrossVA/requirements.txt
 RUN cd /home/shiny/GitHub/pyCrossVA; python3.7 setup.py install
 RUN R CMD javareconf
 RUN R -e "install.packages(c('glue', 'shinyjs', 'openVA', 'CrossVA'), repos='http://cran.rstudio.com/')"
-RUN git -b openVA_App -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/openVA_App
+RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/openVA_App
 RUN R CMD INSTALL /home/shiny/GitHub/openVA_App/pkg
 
 # Set up SmartVA-Analyze
