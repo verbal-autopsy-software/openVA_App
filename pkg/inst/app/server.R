@@ -110,7 +110,7 @@ server <- function(input, output, session) {
       })
     lapply(tmpDirResults, function (i) {dir.create(i)})
     # read in data
-    pyCall <- ""
+    pyCallStdout <- ""
     badData <- 0
     badConversion <- FALSE
     if (input$odkBC & input$algorithm != "Tariff2") {
