@@ -132,7 +132,7 @@ server <- function(input, output, session) {
       if (badData == 0) badData <- badData + sum(vaColNames == names(records))
     }
 
-    if (input$odkBC & grepl("PHMRC", pyCallStdout[1])) {
+    if (input$odkBC & input$algorithm != "Tariff2" & grepl("PHMRC", pyCallStdout[1])) {
       progress$close()
       msg <- "openVA App does not run InSilicoVA or InterVA5 with PHMRC 
       data due to large number of missing items.  We may enable this in future versions."
