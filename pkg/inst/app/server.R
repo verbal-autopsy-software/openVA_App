@@ -15,12 +15,8 @@ server <- function(input, output, session) {
   outputOptions(output, "fileUploaded", suspendWhenHidden = FALSE)
 
   selectedAlgorithm <- reactive({
-    # validate(
-    #   need(compareVersion("0.9.3", packageDescription("CrossVA")$Version) <= 0,
-    #        "Please update the CrossVA package: update.packages()")
-    # )
     switch(input$algorithm,
-           "InSilicoVA" = 1, "InterVA5" = 2)
+           "InSilicoVA" = 1, "InterVA5" = 2, "Tariff2" = 3)
   })
 
   ## Run model
@@ -30,7 +26,7 @@ server <- function(input, output, session) {
   rv$neonate  <- TRUE
   rv$child    <- TRUE
   rv$adult    <- TRUE
-
+  
   observeEvent(input$processMe, {
 
     if (names(dev.cur()) != "null device") dev.off()
@@ -52,6 +48,7 @@ server <- function(input, output, session) {
     shinyjs::disable("processMe")
     shinyjs::disable("algorithm")
     shinyjs::disable("downloadAgeDist")
+    shinyjs::disable("downloadMetadata")
     shinyjs::disable("downloadCOD1")
     shinyjs::disable("downloadCOD2")
     shinyjs::disable("downloadCOD3")
@@ -113,19 +110,45 @@ server <- function(input, output, session) {
       })
     lapply(tmpDirResults, function (i) {dir.create(i)})
     # read in data
-    if(input$odkBC & input$algorithm != 'Tariff2'){
+    pyCall <- ""
+    badData <- 0
+    badConversion <- FALSE
+    if (input$odkBC & input$algorithm != "Tariff2") {
       ## records <- CrossVA::odk2openVA(getData())
       ## records$ID <- getData()$meta.instanceID
       write.csv(getData(), file = 'tmpOut.csv', row.names = FALSE)
       pyAlg <- ifelse(input$algorithm == "InSilicoVA", "InsillicoVA", "InterVA5")
-      pyCall <- paste0('/usr/local/bin/pycrossva-transform AUTODETECT ',
-                       'InterVA5', ' tmpOut.csv --dst pyOut.csv')
-      system(pyCall)
-      records <- read.csv('pyOut.csv', stringsAsFactors = FALSE)
-    } else{
+      pyCall <- paste0("/usr/local/bin/pycrossva-transform AUTODETECT ",
+                       "InterVA5 tmpOut.csv --dst pyOut.csv")
+      pyCallStdout <- system(pyCall, intern = TRUE)
+      records <- read.csv("pyOut.csv", stringsAsFactors = FALSE)
+      nCells <- nrow(records[,-1]) * ncol(records[,-1])
+      if (sum(records[,-1] == ".") == nCells) badConversion <- TRUE
+    } else {
       records <- getData()
+      data(RandomVA5)
+      if (ncol(RandomVA5) != ncol(records)) badData <- badData + 1
+      vaColNames <- names(RandomVA5)
+      if (badData == 0) badData <- badData + sum(vaColNames == names(records))
     }
 
+    if (input$odkBC & grepl("PHMRC", pyCallStdout[1])) {
+      progress$close()
+      msg <- "openVA App does not run InSilicoVA or InterVA5 with PHMRC 
+      data due to large number of missing items.  We may enable this in future versions."
+      showNotification(msg, duration = NULL, type = "error", closeButton = FALSE,
+                       action = a(href = "javascript:history.go(0);", "reset?"))
+    } else if (badConversion) {
+      progress$close()
+      msg <- "Problem with data conversion (all cells are missing).  Are data really from ODK?"
+      showNotification(msg, duration = NULL, type = "error", closeButton = FALSE,
+                       action = a(href = "javascript:history.go(0);", "reset?"))
+    } else if (badData > 0) {
+      progress$close()
+      msg <- "Column names or number of columns do not match what openVA is expecting.  Unable to process data."
+      showNotification(msg, duration = NULL, type = "error", closeButton = FALSE,
+                       action = a(href = "javascript:history.go(0);", "reset?"))
+    } else {
     # object needed to render table of demographic variables
     names(records) <- tolower(names(records))
     whoData <- "i004a" %in% names(records)
@@ -178,14 +201,16 @@ server <- function(input, output, session) {
         library(shiny)
         library(openVA)
       })
+      seeds <- sample(1:2^15, length(namesRuns))
       vaOut <- list(all = NULL, male = NULL, female = NULL,
                     neonate = NULL, child = NULL, adult = NULL)
       parallel::clusterExport(cl,
-                              varlist = c("namesRuns", "tmpDirResults", "modelArgs",
+                              varlist = c("namesRuns", "tmpDirResults", "modelArgs", "seeds",
                                           "records", "all", "male", "female",
                                           "neonate", "child", "adult"),
                               envir = environment())
       vaOut <- parallel::parLapply(cl, 1:length(namesRuns), function (i) {
+        set.seed(seeds[i])
         modelArgs$data <- records[get(namesRuns[i]), ]
         modelArgs$directory <- tmpDirResults[i]
         okRun <- try(
@@ -196,11 +221,10 @@ server <- function(input, output, session) {
       parallel::stopCluster(cl)
       progress$set(message = "done with analyses", value = 5/6)
       names(vaOut) <- namesRuns
-
       lapply(1:length(namesRuns), function (i) {
 
         tmpNameRun <- namesRuns[i]
-        groupName <- gsub('^(.)', '\\U\\1', tmpNameRun, perl = TRUE)
+        groupName <- gsub("^(.)", "\\U\\1", tmpNameRun, perl = TRUE)
         rvName <- paste0("fit", groupName)
         rv[[rvName]] <- vaOut[[tmpNameRun]]
 
@@ -253,7 +277,7 @@ server <- function(input, output, session) {
             plotVA(rv[[rvName]], top = newTop)
             dev.off()
           }
-          downloadPlot <- paste0('downloadPlot', namesNumericCodes[tmpNameRun])
+          downloadPlot <- paste0("downloadPlot", namesNumericCodes[tmpNameRun])
           output[[downloadPlot]] <- downloadHandler(
             filename = plotName,
             content = function(file) {
@@ -273,7 +297,7 @@ server <- function(input, output, session) {
             }
           })
           # Download individual cause assignments
-          downloadCOD <- paste0('downloadCOD', namesNumericCodes[tmpNameRun])
+          downloadCOD <- paste0("downloadCOD", namesNumericCodes[tmpNameRun])
           output[[downloadCOD]] <- downloadHandler(
             filename = paste0("individual-causes-", namesRuns[i], "-", input$algorithm, "-", Sys.Date(), ".csv"),
             content = function(file) {
@@ -282,7 +306,7 @@ server <- function(input, output, session) {
               }
             }
           )
-          downloadData <- paste0('downloadData', namesNumericCodes[tmpNameRun])
+          downloadData <- paste0("downloadData", namesNumericCodes[tmpNameRun])
           output[[downloadData]] <- downloadHandler(
             filename = paste0("results-", namesRuns[i], "-", input$algorithm, "-", Sys.Date(), ".csv"),
             content = function(file) {
@@ -291,7 +315,7 @@ server <- function(input, output, session) {
               }
             }
           )
-          downloadWarnings <- paste0('downloadWarnings', namesNumericCodes[tmpNameRun])
+          downloadWarnings <- paste0("downloadWarnings", namesNumericCodes[tmpNameRun])
           warningFileName <- paste(input$algorithm, "warnings", namesRuns[i], ".txt", sep = "-")
           if(file.exists(warningFileName)) file.remove(warningFileName)
           file.create(warningFileName)
@@ -322,24 +346,24 @@ server <- function(input, output, session) {
     }
     # Tariff2
     if (input$algorithm == "Tariff2"){
-      file.remove(grep('plot-.*-Tariff2', dir(), value = TRUE))
-      if (dir.exists('svaOut')) unlink('svaOut', recursive = TRUE, force = TRUE)
-      dir.create('svaOut')
-      if (file.exists('tmpOut.csv')) file.remove('tmpOut.csv')
+      file.remove(grep("plot-.*-Tariff2", dir(), value = TRUE))
+      if (dir.exists("svaOut")) unlink("svaOut", recursive = TRUE, force = TRUE)
+      dir.create("svaOut")
+      if (file.exists("tmpOut.csv")) file.remove("tmpOut.csv")
       tmpOut <- getData()
       names(tmpOut) <- gsub("\\.", ":", names(tmpOut))
-      write.csv(tmpOut, file = 'tmpOut.csv', na = "", row.names = FALSE)
-      svaCall <- paste('smartva', '--country', input$svaCountry,
-                       '--hiv', ifelse(input$svaHIV, 'True', 'False'),
-                       '--malaria', ifelse(input$svaMalaria, 'True', 'False'),
-                       '--hce', ifelse(input$svaHCE, 'True', 'False'),
-                       '--freetext', ifelse(input$svaFreeText, 'True', 'False'),
-                       '--figures False',
-                       'tmpOut.csv', 'svaOut')
+      write.csv(tmpOut, file = "tmpOut.csv", na = "", row.names = FALSE)
+      svaCall <- paste("smartva", "--country", input$svaCountry,
+                       "--hiv", ifelse(input$svaHIV, "True", "False"),
+                       "--malaria", ifelse(input$svaMalaria, "True", "False"),
+                       "--hce", ifelse(input$svaHCE, "True", "False"),
+                       "--freetext", ifelse(input$svaFreeText, "True", "False"),
+                       "--figures False",
+                       "tmpOut.csv", "svaOut")
       system(svaCall)
 
       # render demographic table
-      indCOD <- read.csv('svaOut/1-individual-cause-of-death/individual-cause-of-death.csv',
+      indCOD <- read.csv("svaOut/1-individual-cause-of-death/individual-cause-of-death.csv",
                          stringsAsFactors = FALSE)
       all <- rep(TRUE, nrow(indCOD))
       adult <- rep(FALSE, nrow(indCOD))
@@ -373,51 +397,51 @@ server <- function(input, output, session) {
         }
       )
       # render results
-      svaCSMF <- read.csv('svaOut/2-csmf/csmf.csv', stringsAsFactors = FALSE)
+      svaCSMF <- read.csv("svaOut/2-csmf/csmf.csv", stringsAsFactors = FALSE)
       if (input$byAll & nrow(indCOD) > 0) {
-        rv$fitAll <- svaCSMF[order(svaCSMF[, 'all'], decreasing = TRUE),
-                             c('cause34', 'all')]
-        names(rv$fitAll) <- c('cause34', 'csmf')
+        rv$fitAll <- svaCSMF[order(svaCSMF[, "all"], decreasing = TRUE),
+                             c("cause34", "all")]
+        names(rv$fitAll) <- c("cause34", "csmf")
         rownames(rv$fitAll) <- NULL
       }
       if (input$bySex & length(male[male]) > 0) {
-        rv$fitMale <- svaCSMF[order(svaCSMF[, 'male'], decreasing = TRUE),
-                             c('cause34', 'male')]
-        names(rv$fitMale) <- c('cause34', 'csmf')
+        rv$fitMale <- svaCSMF[order(svaCSMF[, "male"], decreasing = TRUE),
+                             c("cause34", "male")]
+        names(rv$fitMale) <- c("cause34", "csmf")
         rownames(rv$fitMale) <- NULL
       }
       if (input$bySex & length(female[female]) > 0) {
-        rv$fitFemale <- svaCSMF[order(svaCSMF[, 'female'], decreasing = TRUE),
-                                c('cause34', 'female')]
-        names(rv$fitFemale) <- c('cause34', 'csmf')
+        rv$fitFemale <- svaCSMF[order(svaCSMF[, "female"], decreasing = TRUE),
+                                c("cause34", "female")]
+        names(rv$fitFemale) <- c("cause34", "csmf")
         rownames(rv$fitFemale) <- NULL
       }
       if (input$byAge & length(neonate[neonate]) > 0) {
-        svaCSMFNeo <- read.csv('svaOut/2-csmf/neonate-csmf.csv', stringsAsFactors = FALSE)
-        rv$fitNeonate <- svaCSMFNeo[order(svaCSMFNeo[, 'all'], decreasing = TRUE),
-                                    c('cause34', 'all')]
-        names(rv$fitNeonate) <- c('cause34', 'csmf')
+        svaCSMFNeo <- read.csv("svaOut/2-csmf/neonate-csmf.csv", stringsAsFactors = FALSE)
+        rv$fitNeonate <- svaCSMFNeo[order(svaCSMFNeo[, "all"], decreasing = TRUE),
+                                    c("cause34", "all")]
+        names(rv$fitNeonate) <- c("cause34", "csmf")
         rownames(rv$fitNeonate) <- NULL
       }
       if (input$byAge & length(child[child]) > 0) {
-        svaCSMFChild <- read.csv('svaOut/2-csmf/child-csmf.csv', stringsAsFactors = FALSE)
-        rv$fitChild <- svaCSMFChild[order(svaCSMFChild[, 'all'], decreasing = TRUE),
-                                  c('cause34', 'all')]
-        names(rv$fitChild) <- c('cause34', 'csmf')
+        svaCSMFChild <- read.csv("svaOut/2-csmf/child-csmf.csv", stringsAsFactors = FALSE)
+        rv$fitChild <- svaCSMFChild[order(svaCSMFChild[, "all"], decreasing = TRUE),
+                                  c("cause34", "all")]
+        names(rv$fitChild) <- c("cause34", "csmf")
         rownames(rv$fitChild) <- NULL
       }
       if (input$byAge & length(adult[adult]) > 0) {
-        svaCSMFAdult <- read.csv('svaOut/2-csmf/adult-csmf.csv', stringsAsFactors = FALSE)
-        rv$fitAdult <- svaCSMFAdult[order(svaCSMFAdult[, 'all'], decreasing = TRUE),
-                                    c('cause34', 'all')]
-        names(rv$fitAdult) <- c('cause34', 'csmf')
+        svaCSMFAdult <- read.csv("svaOut/2-csmf/adult-csmf.csv", stringsAsFactors = FALSE)
+        rv$fitAdult <- svaCSMFAdult[order(svaCSMFAdult[, "all"], decreasing = TRUE),
+                                    c("cause34", "all")]
+        names(rv$fitAdult) <- c("cause34", "csmf")
         rownames(rv$fitAdult) <- NULL
       }
 
       lapply(1:length(namesRuns), function (i) {
 
         tmpNameRun <- namesRuns[i]
-        groupName <- gsub('^(.)', '\\U\\1', tmpNameRun, perl = TRUE)
+        groupName <- gsub("^(.)", "\\U\\1", tmpNameRun, perl = TRUE)
         rvName <- paste0("fit", groupName)
 
         titleDescriptiveStats <- paste0("titleDescriptiveStats", groupName)
@@ -450,13 +474,16 @@ server <- function(input, output, session) {
           plotName <- paste0("plot-", tmpNameRun, "-", input$algorithm, "-", Sys.Date(), ".pdf")
           if (file.exists(plotName)) file.remove(plotName)
           pdf(plotName)
+          marOld <- par()
+          par(mar = c(5, 10, 4, 2))
           barplot(height = rev(rv[[rvName]]$csmf[1:newTop]), horiz = TRUE,
-                  names = gsub(' |\\/', '\n', rev(rv[[rvName]]$cause34[1:newTop])),
+                  #names = gsub(" |\\/", "\n", rev(rv[[rvName]]$cause34[1:newTop])),
+                  names = rev(rv[[rvName]]$cause34[1:newTop]),
                   col = grey.colors(length(rv[[rvName]]$csmf[1:newTop])),
-                  las = 1, cex.names = .75, tcl = -0.2,
-                  mar = c(5, 25, 4, 2), mgp = c(3, .25, 0))
+                  las = 1, cex.names = .8, tcl = -0.2, mgp = c(3, .25, 0))
+          par(mar = marOld)
           dev.off()
-          downloadPlot <- paste0('downloadPlot', namesNumericCodes[tmpNameRun])
+          downloadPlot <- paste0("downloadPlot", namesNumericCodes[tmpNameRun])
           output[[downloadPlot]] <- downloadHandler(
             filename = plotName,
             content = function(file) {
@@ -470,22 +497,28 @@ server <- function(input, output, session) {
             paste("CSMF Plot for", groupName, "Records")
           })
           plotGrp <- paste0("plot", groupName)
-          output[[plotGrp]] <- renderPlot({
-            barplot(height = rev(rv[[rvName]]$csmf[1:newTop]), horiz = TRUE,
-                    names = gsub(' |\\/', '\n', rev(rv[[rvName]]$cause34[1:newTop])),
-                    col = grey.colors(length(rv[[rvName]]$csmf[1:newTop])),
-                    las = 1, cex.names = .75, tcl = -0.2,
-                    mar = c(5, 25, 4, 2), mgp = c(3, .25, 0))
-          })
+          if (!is.null(rv[[rvName]])) {
+            output[[plotGrp]] <- renderPlot({
+              marOld <- par()$mar
+              par(mar = c(5, 10, 4, 2))
+              barplot(height = rev(rv[[rvName]]$csmf[1:newTop]), horiz = TRUE,
+                      #names = gsub(" |\\/", "\n", rev(rv[[rvName]]$cause34[1:newTop])),
+                      names = rev(rv[[rvName]]$cause34[1:newTop]),
+                      col = grey.colors(length(rv[[rvName]]$csmf[1:newTop])),
+                      las = 1, cex.names = .8, tcl = -0.2,
+                      mgp = c(3, .25, 0))
+              par(mar = marOld)
+            })
+          }
           # Download individual cause assignments
-          downloadCOD <- paste0('downloadCOD', namesNumericCodes[tmpNameRun])
+          downloadCOD <- paste0("downloadCOD", namesNumericCodes[tmpNameRun])
           output[[downloadCOD]] <- downloadHandler(
             filename = paste0("individual-causes-", namesRuns[i], "-", input$algorithm, "-", Sys.Date(), ".csv"),
             content = function(file) {
               write.csv(indCOD[get(namesRuns[i]),], file = file, row.names = FALSE)
             }
           )
-          downloadData <- paste0('downloadData', namesNumericCodes[tmpNameRun])
+          downloadData <- paste0("downloadData", namesNumericCodes[tmpNameRun])
           output[[downloadData]] <- downloadHandler(
             filename = paste0("results-", namesRuns[i], "-", input$algorithm, "-", Sys.Date(), ".csv"),
             content = function(file) {
@@ -502,13 +535,50 @@ server <- function(input, output, session) {
         }
         if(is.null(rv[[rvName]])) rv[[tmpNameRun]] <- NULL
       })
-      if (dir.exists('fontconfig')) unlink('fontconfig', recursive = TRUE, force = TRUE)
+      if (dir.exists("fontconfig")) unlink("fontconfig", recursive = TRUE, force = TRUE)
     }
     progress$close()
-
+    # download for metadata
+    metaData <- matrix("", nrow = 5, ncol = 2)
+    metaData[1,] <- c("Metadata for openVA_App", as.character(Sys.time()))
+    if (input$odkBC & input$algorithm != "Tariff2") {
+      metaData[2,] <- c("pyCrossVA info", pyCallStdout[1])
+      if (input$algorithm == "InSilicoVA") pkgVersion <- packageVersion("InSilicoVA")
+      if (input$algorithm == "InterVA5") pkgVersion <- packageVersion("InterVA5")
+      metaData[3,] <- c("Algorithm Package Version", as.character(pkgVersion))
+    }
+    if (input$algorithm == "Tariff2") {
+      algCall <- svaCall
+    } else {
+      algCall <- modelArgs
+    }
+      
+    algCall <- unlist(algCall)
+    metaData[4,] <- c("openVA Arguments",
+                      paste(names(algCall), algCall, sep = ": ", collapse = "; "))
+    if (input$algorithm == "InSilicoVA") {
+      metaData[5,] <- c("Random seeds",
+                        paste(namesRuns, seeds, sep = ": ", collapse = "; "))
+    }
+    colnames(metaData) <- c("", "")
+    output$downloadMetadata <- downloadHandler(
+      filename = paste0("metadata", "-", input$algorithm, "-", Sys.Date(), ".csv"),
+      content = function(file) {
+        write.csv(metaData, file = file, row.names = FALSE)
+      }
+    )
+    # download warning messages
+    output$downloadWarnings <- downloadHandler(
+      filename = warningFileName,
+      content = function(file) {
+        file.copy(filename, file)
+      }
+    )
+    
     shinyjs::enable("processMe")
     shinyjs::enable("algorithm")
     shinyjs::enable("downloadAgeDist")
+    shinyjs::enable("downloadMetadata")
     if (input$byAll) {
       shinyjs::enable("downloadPlot1")
       shinyjs::enable("downloadCOD1")
@@ -557,16 +627,12 @@ server <- function(input, output, session) {
         shinyjs::enable("downloadWarnings6")
       }
     }
+    }
   })
 
-  output$downloadWarnings <- downloadHandler(
-    filename = warningFileName,
-    content = function(file) {
-        file.copy(filename, file)
-    }
-  )
   # disable download button on page load
   shinyjs::disable("downloadAgeDist")
+  shinyjs::disable("downloadMetadata")
   shinyjs::disable("downloadCOD1")
   shinyjs::disable("downloadCOD2")
   shinyjs::disable("downloadCOD3")
