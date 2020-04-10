@@ -138,7 +138,7 @@ server <- function(input, output, session) {
       data due to large number of missing items.  We may enable this in future versions."
       showNotification(msg, duration = NULL, type = "error", closeButton = FALSE,
                        action = a(href = "javascript:history.go(0);", "reset?"))
-      vaData <- NULL
+      getData <- NULL
     } else if (badConversion) {
       progress$close()
       msg <- "Problem with data conversion (all cells are missing).  Are data really from ODK?"
