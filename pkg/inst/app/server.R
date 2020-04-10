@@ -481,7 +481,7 @@ server <- function(input, output, session) {
           plotName <- paste0("plot-", tmpNameRun, "-", input$algorithm, "-", Sys.Date(), ".pdf")
           if (file.exists(plotName)) file.remove(plotName)
           pdf(plotName)
-          marOld <- par()
+          marOld <- par()$mar
           par(mar = c(5, 10, 4, 2))
           barplot(height = rev(rv[[rvName]]$csmf[1:newTop]), horiz = TRUE,
                   #names = gsub(" |\\/", "\n", rev(rv[[rvName]]$cause34[1:newTop])),
