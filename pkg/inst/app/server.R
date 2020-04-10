@@ -633,7 +633,6 @@ server <- function(input, output, session) {
     }
   })
 
-  getData <- NULL
   # disable download button on page load
   shinyjs::disable("downloadAgeDist")
   shinyjs::disable("downloadMetadata")
