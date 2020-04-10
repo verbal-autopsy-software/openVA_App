@@ -144,11 +144,13 @@ server <- function(input, output, session) {
       msg <- "Problem with data conversion (all cells are missing).  Are data really from ODK?"
       showNotification(msg, duration = NULL, type = "error", closeButton = FALSE,
                        action = a(href = "javascript:history.go(0);", "reset?"))
+      getData <- NULL
     } else if (badData > 0) {
       progress$close()
       msg <- "Column names or number of columns do not match what openVA is expecting.  Unable to process data."
       showNotification(msg, duration = NULL, type = "error", closeButton = FALSE,
                        action = a(href = "javascript:history.go(0);", "reset?"))
+      getData <- NULL
     } else {
     # object needed to render table of demographic variables
     names(records) <- tolower(names(records))
@@ -631,6 +633,7 @@ server <- function(input, output, session) {
     }
   })
 
+  getData <- NULL
   # disable download button on page load
   shinyjs::disable("downloadAgeDist")
   shinyjs::disable("downloadMetadata")
@@ -657,5 +660,5 @@ server <- function(input, output, session) {
   shinyjs::disable("downloadWarnings3")
   shinyjs::disable("downloadWarnings4")
   shinyjs::disable("downloadWarnings5")
-  shinyjs::disable("downloadWarnings6")
+  shinyjs::disable("downloadWarnings6") 
 }
