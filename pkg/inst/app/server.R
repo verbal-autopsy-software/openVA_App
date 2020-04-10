@@ -2,6 +2,7 @@
 server <- function(input, output, session) {
 
   ## Read in data
+  rvFile <- reactiveValues(clear = 0)
   getData <- reactive({
     vaData <- input$readIn
     if(is.null(vaData)){
@@ -134,23 +135,27 @@ server <- function(input, output, session) {
 
     if (input$odkBC & input$algorithm != "Tariff2" & grepl("PHMRC", pyCallStdout[1])) {
       progress$close()
+      rvFile$clear <- 1
+      observe(rvFile$clear, shinyjs::reset("readIn"))
       msg <- "openVA App does not run InSilicoVA or InterVA5 with PHMRC 
       data due to large number of missing items.  We may enable this in future versions."
       showNotification(msg, duration = NULL, type = "error", closeButton = FALSE,
-                       action = a(href = "javascript:history.go(0);", "reset?"))
-      getData <- NULL
+                       action = a(href = "javascript:history.go(0)", "reset?"))
+                       #action = a(href = "javascript:history.go(0);javascript:document.getElementById('readIn').setAttribute('name', 'jonas');", "reset?"))
     } else if (badConversion) {
       progress$close()
+      rvFile$clear <- 1
+      observe(rvFile$clear, shinyjs::reset("readIn"))
       msg <- "Problem with data conversion (all cells are missing).  Are data really from ODK?"
       showNotification(msg, duration = NULL, type = "error", closeButton = FALSE,
                        action = a(href = "javascript:history.go(0);", "reset?"))
-      getData <- NULL
     } else if (badData > 0) {
       progress$close()
+      rvFile$clear <- 1
+      observe(rvFile$clear, shinyjs::reset("readIn"))
       msg <- "Column names or number of columns do not match what openVA is expecting.  Unable to process data."
       showNotification(msg, duration = NULL, type = "error", closeButton = FALSE,
                        action = a(href = "javascript:history.go(0);", "reset?"))
-      getData <- NULL
     } else {
     # object needed to render table of demographic variables
     names(records) <- tolower(names(records))
