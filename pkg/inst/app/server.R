@@ -141,15 +141,14 @@ server <- function(input, output, session) {
       data due to large number of missing items.  We may enable this in future versions."
       showNotification(msg, duration = NULL, type = "error", closeButton = FALSE,
                        action = a(href = "javascript:history.go(0)", "reset?"))
-                       #action = a(href = "javascript:history.go(0);javascript:document.getElementById('readIn').setAttribute('name', 'jonas');", "reset?"))
-    } else if (badConversion) {
+    } else if (badConversion & input$algorithm != "Tariff2") {
       progress$close()
       rvFile$clear <- 1
       observe(rvFile$clear, shinyjs::reset("readIn"))
       msg <- "Problem with data conversion (all cells are missing).  Are data really from ODK?"
       showNotification(msg, duration = NULL, type = "error", closeButton = FALSE,
                        action = a(href = "javascript:history.go(0);", "reset?"))
-    } else if (badData > 0) {
+    } else if (badData > 0 & input$algorithm != "Tariff2") {
       progress$close()
       rvFile$clear <- 1
       observe(rvFile$clear, shinyjs::reset("readIn"))
