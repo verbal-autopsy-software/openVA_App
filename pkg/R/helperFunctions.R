@@ -39,13 +39,71 @@ indivCOD <- function (x, top = 3) {
   out
 }
 
+#' Format InterVA5 & InSilicoVA summary objects to write as CSV file
+#'
+#' @param x A summary of object returned from openVA::codeVA()
+#' @param top An integer specifying the number of top causes included
+#' in the results.
+#'
+#' @export
+#'
+csmfSummaryCSV <- function (x) {
+
+  alg <- class(x)
+  if (grepl("interVA", alg)) {
+    capturedHead <- capture.output(print(x))[1:5]
+    capturedTail <- tail(capture.output(print(x)), n = 9) 
+    top <- x$top
+  } else {
+    capturedHead <- capture.output(print(x))[1:8]
+    capturedTail <- NULL
+    top <- x$showTop
+  }
+  numRows <- top + length(capturedHead) + 1 + length(capturedTail)
+  numCols <- ifelse(grepl("interVA", alg), 2, 6)
+  outMat <- matrix("", nrow = numRows, ncol = numCols)
+  outMat[1:length(capturedHead), 1] <- capturedHead
+  if (grepl("interVA", alg)) {
+    csmfCols <- 2
+    } else {
+      csmfCols <- 1:5
+  }
+  csmf.out.ordered <- x$csmf.ordered[1:top, ]
+  csmf.out.ordered[, csmfCols] <- round(csmf.out.ordered[, csmfCols], 4)
+  rowStart <- length(capturedHead) + 1
+  if (grepl("interVA", alg)) {
+    outMat[rowStart,] <- names(csmf.out.ordered)
+    rowStart <- rowStart + 1
+    rowStop <- rowStart + nrow(csmf.out.ordered) - 1
+    outMat[rowStart:rowStop, ] <- as.matrix(csmf.out.ordered)
+  } else {
+    outMat[rowStart,] <- c("cause", colnames(csmf.out.ordered))
+    rowStart <- rowStart + 1
+    rowStop <- rowStart + nrow(csmf.out.ordered) - 1
+    outMat[rowStart:rowStop, ] <- cbind(rownames(as.matrix(csmf.out.ordered)),
+                                        as.matrix(csmf.out.ordered))
+  }
+  if (!is.null(capturedTail)) {
+    rowStart <- rowStop + 1
+    rowStop <- rowStart + 2
+    outMat[rowStart:rowStop, ] <- matrix(c(capturedTail[1:2], 
+                                           "cause", "", "", "likelihood"),
+                                         nrow = 3)
+    rowStart <- rowStop + 1
+    rowStop <- numRows
+    csmf.out.ordered <- x$comcat[1:6, ]
+    csmf.out.ordered[, 2] <- round(csmf.out.ordered[, 2], 4)
+    outMat[rowStart:rowStop, ] <- as.matrix(csmf.out.ordered)
+  }
+  return (outMat)
+}
+
 #' Create CSMF plot with Undetermined for InterVA4 Output
 #'
 #' @param x A fitted object returned from openVA::codeVA()
 #' @param top An integer specifying the number of top causes included
 #' in the results.
 #'
-#' @return 
 #' @export
 #'
 CSMF2 <- function (x, top) {
@@ -117,8 +175,7 @@ smartVA_countries <- function () {
     "Cote d’Ivoire" = "CIV",
     "Croatia" = "HRV",
     "Cuba" = "CUB",
-    "Cyprus" = "CY
-    P",
+    "Cyprus" = "CYP",
     "Czech Republic" = "CZE",
     "Democratic Republic of the Congo" = "COD",
     "Denmark" = "DNK",

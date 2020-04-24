@@ -252,8 +252,8 @@ server <- function(input, output, session) {
 
         # produce outputs
         if (!is.null(rv[[rvName]])) {
-
-          rv$indivCOD <- indivCOD(rv[[rvName]], top = 3)
+          rvNameIndivCOD <- paste0("indivCOD", groupName)
+          rv[[rvNameIndivCOD]] <- indivCOD(rv[[rvName]], top = 3)
 
           if (input$algorithm == "InSilicoVA" ) {
             orderedCSMF <- summary(rv[[rvName]])$csmf.ordered[, 1]
@@ -309,16 +309,18 @@ server <- function(input, output, session) {
             filename = paste0("individual-causes-", namesRuns[i], "-", input$algorithm, "-", Sys.Date(), ".csv"),
             content = function(file) {
               if(!is.null(rv[[rvName]])){
-                write.csv(rv$indivCOD, file = file, row.names = FALSE)
+                write.csv(rv[[rvNameIndivCOD]], file = file, row.names = FALSE)
               }
             }
           )
           downloadData <- paste0("downloadData", namesNumericCodes[tmpNameRun])
+          rvNameCSMFSummary <- paste0("csmfSummary", groupName)
+          rv[[rvNameCSMFSummary]] <- csmfSummaryCSV(summary(rv[[rvName]], top = newTop))
           output[[downloadData]] <- downloadHandler(
             filename = paste0("results-", namesRuns[i], "-", input$algorithm, "-", Sys.Date(), ".csv"),
             content = function(file) {
               if(!is.null(rv[[rvName]])){
-                write.csv(print(summary(rv[[rvName]], top = newTop)), file = file)
+                write.table(rv[[rvNameCSMFSummary]], file = file, row.names = FALSE, col.names = FALSE)
               }
             }
           )
