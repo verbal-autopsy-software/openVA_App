@@ -52,7 +52,8 @@ csmfSummaryCSV <- function (x) {
   alg <- class(x)
   if (grepl("interVA", alg)) {
     capturedHead <- capture.output(print(x))[1:5]
-    capturedTail <- tail(capture.output(print(x)), n = 9) 
+    capturedTail <- tail(capture.output(print(x)), n = 9)
+    #startTail <- which(grepl('Top', capturedTail)) - 1
     top <- x$top
   } else {
     capturedHead <- capture.output(print(x))[1:8]
@@ -60,6 +61,7 @@ csmfSummaryCSV <- function (x) {
     top <- x$showTop
   }
   numRows <- top + length(capturedHead) + 1 + length(capturedTail)
+  numRows <- top + length(capturedHead) + 1 + 9
   numCols <- ifelse(grepl("interVA", alg), 2, 6)
   outMat <- matrix("", nrow = numRows, ncol = numCols)
   outMat[1:length(capturedHead), 1] <- capturedHead
@@ -86,7 +88,8 @@ csmfSummaryCSV <- function (x) {
   if (!is.null(capturedTail)) {
     rowStart <- rowStop + 1
     rowStop <- rowStart + 2
-    outMat[rowStart:rowStop, ] <- matrix(c(capturedTail[1:2], 
+    outMat[rowStart:rowStop, ] <- matrix(c(#capturedTail[1:2], 
+                                           "", "Top 6 Circumstances of Mortality Category:",
                                            "cause", "", "", "likelihood"),
                                          nrow = 3)
     rowStart <- rowStop + 1
@@ -97,6 +100,184 @@ csmfSummaryCSV <- function (x) {
   }
   return (outMat)
 }
+
+#' Separate InterVA5 results by age and sex.
+#'
+#' @param x A fitted object returned from openVA::codeVA()
+#'
+#' @export
+#'
+sepVAResults <- function (x) {
+  
+  index <- which(colnames(x$checkedData) == 'i019a')
+  idMale <- x$checkedData[x$checkedData[, index] == 1, 1]
+  index <- which(colnames(x$checkedData) == 'i019b')
+  idFemale <- x$checkedData[x$checkedData[, index] == 1, 1]
+  index <- which(colnames(x$checkedData) == 'i022g')
+  idNeonate <- x$checkedData[x$checkedData[, index] == 1 & 
+                             !is.na(x$checkedData[, index]), 1]
+  index1 <- which(colnames(x$checkedData) == 'i022f')
+  index2 <- which(colnames(x$checkedData) == 'i022e')
+  index3 <- which(colnames(x$checkedData) == 'i022d')
+  idChild <- x$checkedData[(x$checkedData[, index1] == 1 &
+                              !is.na(x$checkedData[, index1])) |
+                            (x$checkedData[, index1] == 1 &
+                              !is.na(x$checkedData[, index1])) |
+                            (x$checkedData[, index1] == 1 &
+                              !is.na(x$checkedData[, index1])), 1]
+  index1 <- which(colnames(x$checkedData) == 'i022a')
+  index2 <- which(colnames(x$checkedData) == 'i022b')
+  index3 <- which(colnames(x$checkedData) == 'i022c')
+  idAdult <- x$checkedData[(x$checkedData[, index1] == 1 &
+                            !is.na(x$checkedData[, index1])) |
+                           (x$checkedData[, index1] == 1 &
+                            !is.na(x$checkedData[, index1])) |
+                           (x$checkedData[, index1] == 1 &
+                            !is.na(x$checkedData[, index1])), 1]
+  idMNeonate <- idNeonate[idNeonate %in% idMale]
+  idMChild <- idChild[idChild %in% idMale]
+  idMAdult <- idAdult[idAdult %in% idMale]
+  idFNeonate <- idNeonate[idNeonate %in% idFemale]
+  idFChild <- idChild[idChild %in% idFemale]
+  idFAdult <- idAdult[idAdult %in% idFemale]
+  
+  results <- list(all = x)
+  keep <- x$ID %in% idMale
+  if (sum(keep) == 0) {
+    results$male <- NULL
+  } else {
+    results$male <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    class(results$male) <- class(x)
+  }
+  keep <- x$ID %in% idFemale
+  if (sum(keep) == 0) {
+    results$female <- NULL
+  } else {
+    results$female <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    class(results$female) <- class(x)
+  }
+  keep <- x$ID %in% idNeonate
+  if (sum(keep) == 0) {
+    results$neonate <- NULL
+  } else {
+    results$neonate <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    class(results$neonate) <- class(x)
+  }
+  keep <- x$ID %in% idChild
+  if (sum(keep) == 0) {
+    results$child <- NULL
+  } else {
+    results$child <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    class(results$child) <- class(x)
+  }
+  keep <- x$ID %in% idAdult
+  if (sum(keep) == 0) {
+    results$adult <- NULL
+  } else {
+    results$adult <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    class(results$adult) <- class(x)
+  }
+  keep <- x$ID %in% idMNeonate
+  if (sum(keep) == 0) {
+    results$mNeonate <- NULL
+  } else {
+    results$mNeonate <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    class(results$mNeonate) <- class(x)
+  }
+  keep <- x$ID %in% idMChild
+  if (sum(keep) == 0) {
+    results$mChild <- NULL
+  } else {
+    results$mChild <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    class(results$mChild) <- class(x)
+  }
+  keep <- x$ID %in% idMAdult
+  if (sum(keep) == 0) {
+    results$mAdult <- NULL
+  } else {
+    results$mAdult <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    class(results$mAdult) <- class(x)
+  }
+  keep <- x$ID %in% idFNeonate
+  if (sum(keep) == 0) {
+    results$fNeonate <- NULL
+  } else {
+    results$fNeonate <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    class(results$fNeonate) <- class(x)
+  }
+  keep <- x$ID %in% idFChild
+  if (sum(keep) == 0) {
+    results$fChild <- NULL
+  } else {
+    results$fChild <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    class(results$fChild) <- class(x)
+  }
+  keep <- x$ID %in% idFAdult
+  if (sum(keep) == 0) {
+    results$fAdult <- NULL
+  } else {
+    results$fAdult <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    class(results$fAdult) <- class(x)
+  }
+  return(results)
+}
+
+#' Separate InterVA5 log messages by age and sex.
+#'
+#' @param x A fitted object returned from openVA::codeVA()
+#' 
+#' @param log_file String with path to log file.
+#'
+#' @export
+#'
+sepVALog <- function (x, names_runs, log_file) {
+  
+  idAll <- x$checkedData[, 1]
+  index <- which(colnames(x$checkedData) == "i019a")
+  idMale <- x$checkedData[x$checkedData[, index] == 1, 1]
+  index <- which(colnames(x$checkedData) == "i019b")
+  idFemale <- x$checkedData[x$checkedData[, index] == 1, 1]
+  index <- which(colnames(x$checkedData) == "i022g")
+  idNeonate <- x$checkedData[x$checkedData[, index] == 1 & 
+                               !is.na(x$checkedData[, index]), 1]
+  index1 <- which(colnames(x$checkedData) == "i022f")
+  index2 <- which(colnames(x$checkedData) == "i022e")
+  index3 <- which(colnames(x$checkedData) == "i022d")
+  idChild <- x$checkedData[(x$checkedData[, index1] == 1 &
+                              !is.na(x$checkedData[, index1])) |
+                             (x$checkedData[, index1] == 1 &
+                                !is.na(x$checkedData[, index1])) |
+                             (x$checkedData[, index1] == 1 &
+                                !is.na(x$checkedData[, index1])), 1]
+  index1 <- which(colnames(x$checkedData) == "i022a")
+  index2 <- which(colnames(x$checkedData) == "i022b")
+  index3 <- which(colnames(x$checkedData) == "i022c")
+  idAdult <- x$checkedData[(x$checkedData[, index1] == 1 &
+                              !is.na(x$checkedData[, index1])) |
+                             (x$checkedData[, index1] == 1 &
+                                !is.na(x$checkedData[, index1])) |
+                             (x$checkedData[, index1] == 1 &
+                                !is.na(x$checkedData[, index1])), 1]
+  idMNeonate <- idNeonate[idNeonate %in% idMale]
+  idMChild <- idChild[idChild %in% idMale]
+  idMAdult <- idAdult[idAdult %in% idMale]
+  idFNeonate <- idNeonate[idNeonate %in% idFemale]
+  idFChild <- idChild[idChild %in% idFemale]
+  idFAdult <- idAdult[idAdult %in% idFemale]
+  
+  outFileName <- paste0("__tmp__", names_runs, "/errorlogV5.txt")
+  groupName <- gsub("^(.)", "id\\U\\1", names_runs, perl = TRUE)
+  for (i in 1:length(names_runs)) {
+    ids <- get(groupName[i])
+    rmIDs <- idAll[!(idAll %in% ids)]
+    sedIDs <- paste0(rmIDs, collapse = " |")
+    sedCMD1 <- "sed -E"
+    sedCMD2 <- paste0("'/^(", sedIDs, ") /d'")
+    sedCMD3 <- paste0(log_file, " > ", outFileName[i])
+    system(paste(sedCMD1, sedCMD2, sedCMD3))
+  }
+}
+
 
 #' Create CSMF plot with Undetermined for InterVA4 Output
 #'
