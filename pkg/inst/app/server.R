@@ -196,33 +196,21 @@ server <- function(input, output, session) {
       neonate <- rep(FALSE, length(records$i022g))
       neonate[records$i022g == "y"] <- TRUE
       child  <- rep(FALSE, length(records$i022f))
-      child[records$i022f == "y"] <- TRUE
-      child[records$i022e == "y"] <- TRUE
-      child[records$i022d == "Y"] <- TRUE
+      child[records$i022f == "y" | records$i022e == "y" | records$i022d == "y"] <- TRUE
       adult <- rep(FALSE, length(records$i022a))
-      adult[records$i022a == "y"] <- TRUE
-      adult[records$i022b == "y"] <- TRUE
-      adult[records$i022c == "y"] <- TRUE
+      adult[records$i022a == "y" | records$i022b == "y" | records$i022c == "y"] <- TRUE
       mNeonate <- rep(FALSE, length(records$i022g))
-      mNeonate[records$i019a == "y" & records$i022g == "y"] <- TRUE
+      mNeonate[male & neonate] <- TRUE
       mChild <- rep(FALSE, length(records$i022f))
-      mChild[records$i019a == "y" & records$i022f == "y"] <- TRUE
-      mChild[records$i019a == "y" & records$i022e == "y"] <- TRUE
-      mChild[records$i019a == "y" & records$i022d == "y"] <- TRUE
+      mChild[male & child] <- TRUE
       mAdult <- rep(FALSE, length(records$i022a))
-      mAdult[records$i019a == "y" & records$i022a == "y"] <- TRUE
-      mAdult[records$i019a == "y" & records$i022b == "y"] <- TRUE
-      mAdult[records$i019a == "y" & records$i022c == "y"] <- TRUE
+      mAdult[male & adult] <- TRUE
       fNeonate <- rep(FALSE, length(records$i022g))
-      fNeonate[records$i019b == "y" & records$i022g == "y"] <- TRUE
+      fNeonate[female & neonate] <- TRUE
       fChild <- rep(FALSE, length(records$i022f))
-      fChild[records$i019b == "y" & records$i022f == "y"] <- TRUE
-      fChild[records$i019b == "y" & records$i022e == "y"] <- TRUE
-      fChild[records$i019b == "y" & records$i022d == "y"] <- TRUE
+      fChild[female & child] <- TRUE
       fAdult <- rep(FALSE, length(records$i022a))
-      fAdult[records$i019b == "y" & records$i022a == "y"] <- TRUE
-      fAdult[records$i019b == "y" & records$i022b == "y"] <- TRUE
-      fAdult[records$i019b == "y" & records$i022c == "y"] <- TRUE
+      fAdult[female & adult] <- TRUE
       
       namesRuns <- c("all", "male", "female", "neonate", "child", "adult",
                      "mNeonate", "mChild", "mAdult", "fNeonate", "fChild", "fAdult")
@@ -462,6 +450,18 @@ server <- function(input, output, session) {
         female[indCOD$sex == 2] <- TRUE
         male <- rep(FALSE, nrow(indCOD))
         male[indCOD$sex == 1] <- TRUE
+        mNeonate <- rep(FALSE, nrow(indCOD))
+        mNeonate[male & neonate] <- TRUE
+        mChild <- rep(FALSE, nrow(indCOD))
+        mChild[male & child] <- TRUE
+        mAduld <- rep(FALSE, nrow(indCOD))
+        mAdult[male & adult] <- TRUE
+        fNeonate <- rep(FALSE, nrow(indCOD))
+        fNeonate[female & neonate] <- TRUE
+        fChild <- rep(FALSE, nrow(indCOD))
+        fChild[female & child] <- TRUE
+        fAdult <- rep(FALSE, nrow(indCOD))
+        fAdult[female & adult] <- TRUE
         
         counts <- c(length(male[male]), length(female[female]),
                     length(neonate[neonate]), length(child[child]),
@@ -518,6 +518,39 @@ server <- function(input, output, session) {
                                       c("cause34", "all")]
           names(rv$fitAdult) <- c("cause34", "csmf")
           rownames(rv$fitAdult) <- NULL
+        }
+        if (input$byAgeSex & length(neonate[neonate]) > 0) {
+          svaCSMFNeonate <- read.csv("svaOut/2-csmf/neonate-csmf.csv", stringsAsFactors = FALSE)
+          rv$fitMNeonate <- svaCSMFNeonate[order(svaCSMFNeonate[, "male"], decreasing = TRUE),
+                                           c("cause34", "male")]
+          names(rv$fitMNeonate) <- c("cause34", "csmf")
+          rownames(rv$fitMNeonate) <- NULL
+          rv$fitFNeonate <- svaCSMFNeonate[order(svaCSMFNeonate[, "female"], decreasing = TRUE),
+                                            c("cause34", "female")]
+          names(rv$fitFNeonate) <- c("cause34", "csmf")
+          rownames(rv$fitFNeonate) <- NULL
+        }
+        if (input$byAgeSex & length(child[child]) > 0) {
+          svaCSMFChild <- read.csv("svaOut/2-csmf/child-csmf.csv", stringsAsFactors = FALSE)
+          rv$fitMChild <- svaCSMFChild[order(svaCSMFChild[, "male"], decreasing = TRUE),
+                                       c("cause34", "male")]
+          names(rv$fitMChild) <- c("cause34", "csmf")
+          rownames(rv$fitMChild) <- NULL
+          rv$fitFChild <- svaCSMFChild[order(svaCSMFChild[, "female"], decreasing = TRUE),
+                                       c("cause34", "female")]
+          names(rv$fitFChild) <- c("cause34", "csmf")
+          rownames(rv$fitFChild) <- NULL
+        }
+        if (input$byAgeSex & length(adult[adult]) > 0) {
+          svaCSMFAdult <- read.csv("svaOut/2-csmf/adult-csmf.csv", stringsAsFactors = FALSE)
+          rv$fitMAdult <- svaCSMFAdult[order(svaCSMFAdult[, "male"], decreasing = TRUE),
+                                       c("cause34", "male")]
+          names(rv$fitMAdult) <- c("cause34", "csmf")
+          rownames(rv$fitMAdult) <- NULL
+          rv$fitFAdult <- svaCSMFAdult[order(svaCSMFAdult[, "female"], decreasing = TRUE),
+                                       c("cause34", "female")]
+          names(rv$fitFAdult) <- c("cause34", "csmf")
+          rownames(rv$fitFAdult) <- NULL
         }
         
         lapply(1:length(namesRuns), function (i) {

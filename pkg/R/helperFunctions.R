@@ -121,19 +121,19 @@ sepVAResults <- function (x) {
   index3 <- which(colnames(x$checkedData) == 'i022d')
   idChild <- x$checkedData[(x$checkedData[, index1] == 1 &
                               !is.na(x$checkedData[, index1])) |
-                            (x$checkedData[, index1] == 1 &
-                              !is.na(x$checkedData[, index1])) |
-                            (x$checkedData[, index1] == 1 &
-                              !is.na(x$checkedData[, index1])), 1]
+                            (x$checkedData[, index2] == 1 &
+                              !is.na(x$checkedData[, index2])) |
+                            (x$checkedData[, index3] == 1 &
+                              !is.na(x$checkedData[, index3])), 1]
   index1 <- which(colnames(x$checkedData) == 'i022a')
   index2 <- which(colnames(x$checkedData) == 'i022b')
   index3 <- which(colnames(x$checkedData) == 'i022c')
   idAdult <- x$checkedData[(x$checkedData[, index1] == 1 &
                             !is.na(x$checkedData[, index1])) |
-                           (x$checkedData[, index1] == 1 &
-                            !is.na(x$checkedData[, index1])) |
-                           (x$checkedData[, index1] == 1 &
-                            !is.na(x$checkedData[, index1])), 1]
+                           (x$checkedData[, index2] == 1 &
+                            !is.na(x$checkedData[, index2])) |
+                           (x$checkedData[, index3] == 1 &
+                            !is.na(x$checkedData[, index3])), 1]
   idMNeonate <- idNeonate[idNeonate %in% idMale]
   idMChild <- idChild[idChild %in% idMale]
   idMAdult <- idAdult[idAdult %in% idMale]
@@ -245,19 +245,19 @@ sepVALog <- function (x, names_runs, log_file) {
   index3 <- which(colnames(x$checkedData) == "i022d")
   idChild <- x$checkedData[(x$checkedData[, index1] == 1 &
                               !is.na(x$checkedData[, index1])) |
-                             (x$checkedData[, index1] == 1 &
-                                !is.na(x$checkedData[, index1])) |
-                             (x$checkedData[, index1] == 1 &
-                                !is.na(x$checkedData[, index1])), 1]
+                             (x$checkedData[, index2] == 1 &
+                                !is.na(x$checkedData[, index2])) |
+                             (x$checkedData[, index3] == 1 &
+                                !is.na(x$checkedData[, index3])), 1]
   index1 <- which(colnames(x$checkedData) == "i022a")
   index2 <- which(colnames(x$checkedData) == "i022b")
   index3 <- which(colnames(x$checkedData) == "i022c")
   idAdult <- x$checkedData[(x$checkedData[, index1] == 1 &
                               !is.na(x$checkedData[, index1])) |
-                             (x$checkedData[, index1] == 1 &
-                                !is.na(x$checkedData[, index1])) |
-                             (x$checkedData[, index1] == 1 &
-                                !is.na(x$checkedData[, index1])), 1]
+                             (x$checkedData[, index2] == 1 &
+                                !is.na(x$checkedData[, index2])) |
+                             (x$checkedData[, index3] == 1 &
+                                !is.na(x$checkedData[, index3])), 1]
   idMNeonate <- idNeonate[idNeonate %in% idMale]
   idMChild <- idChild[idChild %in% idMale]
   idMAdult <- idAdult[idAdult %in% idMale]
