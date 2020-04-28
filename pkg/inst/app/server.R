@@ -1,4 +1,4 @@
-#' @import shiny
+#' @import shiny 
 server <- function(input, output, session) {
 
   ## Read in data
@@ -161,6 +161,53 @@ server <- function(input, output, session) {
       vaColNames <- names(RandomVA5)
       if (badData == 0) badData <- badData + sum(vaColNames == names(records))
     }
+    names(records) <- tolower(names(records))
+    whoData <- "i004a" %in% names(records)
+    all <- rep(TRUE, nrow(records))
+    male <- rep(FALSE, length(records$i019a))
+    male[records$i019a == "y"] <- TRUE
+    female <- rep(FALSE, length(records$i019b))
+    female[records$i019b == "y"] <- TRUE
+    neonate <- rep(FALSE, length(records$i022g))
+    neonate[records$i022g == "y"] <- TRUE
+    child  <- rep(FALSE, length(records$i022f))
+    child[records$i022f == "y" | records$i022e == "y" | records$i022d == "y"] <- TRUE
+    adult <- rep(FALSE, length(records$i022a))
+    adult[records$i022a == "y" | records$i022b == "y" | records$i022c == "y"] <- TRUE
+    mNeonate <- rep(FALSE, length(records$i022g))
+    mNeonate[male & neonate] <- TRUE
+    mChild <- rep(FALSE, length(records$i022f))
+    mChild[male & child] <- TRUE
+    mAdult <- rep(FALSE, length(records$i022a))
+    mAdult[male & adult] <- TRUE
+    fNeonate <- rep(FALSE, length(records$i022g))
+    fNeonate[female & neonate] <- TRUE
+    fChild <- rep(FALSE, length(records$i022f))
+    fChild[female & child] <- TRUE
+    fAdult <- rep(FALSE, length(records$i022a))
+    fAdult[female & adult] <- TRUE
+    namesRuns <- c("all", "male", "female", "neonate", "child", "adult",
+                   "mNeonate", "mChild", "mAdult", "fNeonate", "fChild", "fAdult")
+    namesNumericCodes <- 1:12
+    names(namesNumericCodes) <- namesRuns
+    includeRuns <- c(input$byAll, rep(input$bySex, 2), rep(input$byAge, 3),
+                     rep(input$byAgeSex, 6))
+    if (whoData) {
+      nonZero <- c(sum(adult) > 0, sum(male) > 0, sum(female) > 0,
+                   sum(neonate) > 0, sum(child) > 0, sum(adult) > 0,
+                   sum(mNeonate) > 0, sum(mChild) > 0, sum(mAdult) > 0,
+                   sum(fNeonate) > 0, sum(fChild) > 0, sum(fAdult) > 0)
+      nRuns <- sum(includeRuns & nonZero)
+      namesRuns <- namesRuns[includeRuns & nonZero]
+    } else {
+      nRuns <- sum(includeRuns)
+      namesRuns <- namesRuns[includeRuns]
+    }
+    tmpDirResults <- paste0(getwd(), "/__tmp__", namesRuns)
+    lapply(tmpDirResults, function (i) {
+      if (dir.exists(i)) unlink(i, recursive = TRUE, force = TRUE)
+    })
+    lapply(tmpDirResults, function (i) {dir.create(i)})
 
     if (input$odkBC & input$algorithm != "Tariff2" & grepl("PHMRC", pyCallStdout[1])) {
       progress$close()
@@ -186,65 +233,59 @@ server <- function(input, output, session) {
                        action = a(href = "javascript:history.go(0);", "reset?"))
     } else {
       # object needed to render table of demographic variables
-      names(records) <- tolower(names(records))
-      whoData <- "i004a" %in% names(records)
-      all <- rep(TRUE, nrow(records))
-      male <- rep(FALSE, length(records$i019a))
-      male[records$i019a == "y"] <- TRUE
-      female <- rep(FALSE, length(records$i019b))
-      female[records$i019b == "y"] <- TRUE
-      neonate <- rep(FALSE, length(records$i022g))
-      neonate[records$i022g == "y"] <- TRUE
-      child  <- rep(FALSE, length(records$i022f))
-      child[records$i022f == "y" | records$i022e == "y" | records$i022d == "y"] <- TRUE
-      adult <- rep(FALSE, length(records$i022a))
-      adult[records$i022a == "y" | records$i022b == "y" | records$i022c == "y"] <- TRUE
-      mNeonate <- rep(FALSE, length(records$i022g))
-      mNeonate[male & neonate] <- TRUE
-      mChild <- rep(FALSE, length(records$i022f))
-      mChild[male & child] <- TRUE
-      mAdult <- rep(FALSE, length(records$i022a))
-      mAdult[male & adult] <- TRUE
-      fNeonate <- rep(FALSE, length(records$i022g))
-      fNeonate[female & neonate] <- TRUE
-      fChild <- rep(FALSE, length(records$i022f))
-      fChild[female & child] <- TRUE
-      fAdult <- rep(FALSE, length(records$i022a))
-      fAdult[female & adult] <- TRUE
+      # names(records) <- tolower(names(records))
+      # whoData <- "i004a" %in% names(records)
+      # all <- rep(TRUE, nrow(records))
+      # male <- rep(FALSE, length(records$i019a))
+      # male[records$i019a == "y"] <- TRUE
+      # female <- rep(FALSE, length(records$i019b))
+      # female[records$i019b == "y"] <- TRUE
+      # neonate <- rep(FALSE, length(records$i022g))
+      # neonate[records$i022g == "y"] <- TRUE
+      # child  <- rep(FALSE, length(records$i022f))
+      # child[records$i022f == "y" | records$i022e == "y" | records$i022d == "y"] <- TRUE
+      # adult <- rep(FALSE, length(records$i022a))
+      # adult[records$i022a == "y" | records$i022b == "y" | records$i022c == "y"] <- TRUE
+      # mNeonate <- rep(FALSE, length(records$i022g))
+      # mNeonate[male & neonate] <- TRUE
+      # mChild <- rep(FALSE, length(records$i022f))
+      # mChild[male & child] <- TRUE
+      # mAdult <- rep(FALSE, length(records$i022a))
+      # mAdult[male & adult] <- TRUE
+      # fNeonate <- rep(FALSE, length(records$i022g))
+      # fNeonate[female & neonate] <- TRUE
+      # fChild <- rep(FALSE, length(records$i022f))
+      # fChild[female & child] <- TRUE
+      # fAdult <- rep(FALSE, length(records$i022a))
+      # fAdult[female & adult] <- TRUE
       
-      namesRuns <- c("all", "male", "female", "neonate", "child", "adult",
-                     "mNeonate", "mChild", "mAdult", "fNeonate", "fChild", "fAdult")
-      namesNumericCodes <- 1:12
-      names(namesNumericCodes) <- namesRuns
-      includeRuns <- c(input$byAll, rep(input$bySex, 2), rep(input$byAge, 3),
-                       rep(input$byAgeSex, 6))
-      nonZero <- c(sum(adult) > 0, sum(male) > 0, sum(female) > 0,
-                   sum(neonate) > 0, sum(child) > 0, sum(adult) > 0,
-                   sum(mNeonate) > 0, sum(mChild) > 0, sum(mAdult) > 0,
-                   sum(fNeonate) > 0, sum(fChild) > 0, sum(fAdult) > 0)
-      nRuns <- sum(includeRuns & nonZero)
-      namesRuns <- namesRuns[includeRuns & nonZero]
-      tmpDirResults <- paste0(getwd(), "/__tmp__", namesRuns)
-      lapply(tmpDirResults, function (i) {
-        if (dir.exists(i)) unlink(i, recursive = TRUE, force = TRUE)
-      })
-      lapply(tmpDirResults, function (i) {dir.create(i)})
-      
-      ageGroup <- rep(NA, length(records$i022a))
-      ageGroup[neonate] <- "neonate"
-      ageGroup[child]  <- "child"
-      ageGroup[adult]  <- "ages >14"
-      
-      counts <- c(length(male[male]), length(female[female]),
-                  length(neonate[neonate]), length(child[child]),
-                  length(adult[adult]),
-                  length(records$ID[records$i022a=="." & records$i022b=="." & records$i022c=="." &
-                                      records$i022d=="." & records$i022e=="." & records$i022f=="." &
-                                      records$i022g=="."]),
-                  nrow(records))
+      # ageGroup <- rep(NA, length(records$i022a))
+      # ageGroup[neonate] <- "neonate"
+      # ageGroup[child]  <- "child"
+      # ageGroup[adult]  <- "ages >14"
+      # 
+      # counts <- c(length(male[male]), length(female[female]),
+      #             length(neonate[neonate]), length(child[child]),
+      #             length(adult[adult]),
+      #             length(records$ID[records$i022a=="." & records$i022b=="." & records$i022c=="." &
+      #                                 records$i022d=="." & records$i022e=="." & records$i022f=="." &
+      #                                 records$i022g=="."]),
+      #             nrow(records))
       
       # InSilico & InterVA5
       if (input$algorithm == "InSilicoVA" | input$algorithm == "InterVA5") {
+        ageGroup <- rep(NA, length(records$i022a))
+        ageGroup[neonate] <- "neonate"
+        ageGroup[child]  <- "child"
+        ageGroup[adult]  <- "ages >14"
+
+        counts <- c(length(male[male]), length(female[female]),
+                    length(neonate[neonate]), length(child[child]),
+                    length(adult[adult]),
+                    length(records$ID[records$i022a=="." & records$i022b=="." & records$i022c=="." &
+                                        records$i022d=="." & records$i022e=="." & records$i022f=="." &
+                                        records$i022g=="."]),
+                    nrow(records))
         if(file.exists("plotAgeDist.pdf")) file.remove("plotAgeDist.pdf")
         pdf("plotAgeDist.pdf")
         barplot(table(ageGroup), horiz = TRUE, main="Age Distribution", xlab="Counts")
@@ -415,7 +456,8 @@ server <- function(input, output, session) {
         })
       }
       # Tariff2
-      if (input$algorithm == "Tariff2"){
+      if (input$algorithm == "Tariff2") {
+
         file.remove(grep("plot-.*-Tariff2", dir(), value = TRUE))
         if (dir.exists("svaOut")) unlink("svaOut", recursive = TRUE, force = TRUE)
         dir.create("svaOut")
@@ -454,7 +496,7 @@ server <- function(input, output, session) {
         mNeonate[male & neonate] <- TRUE
         mChild <- rep(FALSE, nrow(indCOD))
         mChild[male & child] <- TRUE
-        mAduld <- rep(FALSE, nrow(indCOD))
+        mAdult <- rep(FALSE, nrow(indCOD))
         mAdult[male & adult] <- TRUE
         fNeonate <- rep(FALSE, nrow(indCOD))
         fNeonate[female & neonate] <- TRUE
@@ -486,18 +528,21 @@ server <- function(input, output, session) {
           names(rv$fitAll) <- c("cause34", "csmf")
           rownames(rv$fitAll) <- NULL
         }
+        if (nrow(indCOD) == 0) rv$fitAll <- NULL
         if (input$bySex & length(male[male]) > 0) {
           rv$fitMale <- svaCSMF[order(svaCSMF[, "male"], decreasing = TRUE),
                                 c("cause34", "male")]
           names(rv$fitMale) <- c("cause34", "csmf")
           rownames(rv$fitMale) <- NULL
         }
+        if (length(male[male]) == 0) rv$fitMale <- NULL
         if (input$bySex & length(female[female]) > 0) {
           rv$fitFemale <- svaCSMF[order(svaCSMF[, "female"], decreasing = TRUE),
                                   c("cause34", "female")]
           names(rv$fitFemale) <- c("cause34", "csmf")
           rownames(rv$fitFemale) <- NULL
         }
+        if (length(female[female]) == 0) rv$fitFemale <- NULL
         if (input$byAge & length(neonate[neonate]) > 0) {
           svaCSMFNeo <- read.csv("svaOut/2-csmf/neonate-csmf.csv", stringsAsFactors = FALSE)
           rv$fitNeonate <- svaCSMFNeo[order(svaCSMFNeo[, "all"], decreasing = TRUE),
@@ -505,6 +550,7 @@ server <- function(input, output, session) {
           names(rv$fitNeonate) <- c("cause34", "csmf")
           rownames(rv$fitNeonate) <- NULL
         }
+        if (length(neonate[neonate]) == 0) rv$fitNeonate <- NULL
         if (input$byAge & length(child[child]) > 0) {
           svaCSMFChild <- read.csv("svaOut/2-csmf/child-csmf.csv", stringsAsFactors = FALSE)
           rv$fitChild <- svaCSMFChild[order(svaCSMFChild[, "all"], decreasing = TRUE),
@@ -512,6 +558,7 @@ server <- function(input, output, session) {
           names(rv$fitChild) <- c("cause34", "csmf")
           rownames(rv$fitChild) <- NULL
         }
+        if (length(child[child]) == 0) rv$fitChild <- NULL
         if (input$byAge & length(adult[adult]) > 0) {
           svaCSMFAdult <- read.csv("svaOut/2-csmf/adult-csmf.csv", stringsAsFactors = FALSE)
           rv$fitAdult <- svaCSMFAdult[order(svaCSMFAdult[, "all"], decreasing = TRUE),
@@ -519,6 +566,7 @@ server <- function(input, output, session) {
           names(rv$fitAdult) <- c("cause34", "csmf")
           rownames(rv$fitAdult) <- NULL
         }
+        if (length(adult[adult]) == 0) rv$fitAdult <- NULL
         if (input$byAgeSex & length(neonate[neonate]) > 0) {
           svaCSMFNeonate <- read.csv("svaOut/2-csmf/neonate-csmf.csv", stringsAsFactors = FALSE)
           rv$fitMNeonate <- svaCSMFNeonate[order(svaCSMFNeonate[, "male"], decreasing = TRUE),
@@ -530,6 +578,8 @@ server <- function(input, output, session) {
           names(rv$fitFNeonate) <- c("cause34", "csmf")
           rownames(rv$fitFNeonate) <- NULL
         }
+        if (length(neonate[neonate & male]) == 0) rv$fitMNeonate <- NULL
+        if (length(neonate[neonate & female]) == 0) rv$fitFNeonate <- NULL
         if (input$byAgeSex & length(child[child]) > 0) {
           svaCSMFChild <- read.csv("svaOut/2-csmf/child-csmf.csv", stringsAsFactors = FALSE)
           rv$fitMChild <- svaCSMFChild[order(svaCSMFChild[, "male"], decreasing = TRUE),
@@ -541,6 +591,8 @@ server <- function(input, output, session) {
           names(rv$fitFChild) <- c("cause34", "csmf")
           rownames(rv$fitFChild) <- NULL
         }
+        if (length(child[child & male]) == 0) rv$fitMChild <- NULL
+        if (length(child[child & female]) == 0) rv$fitFChild <- NULL
         if (input$byAgeSex & length(adult[adult]) > 0) {
           svaCSMFAdult <- read.csv("svaOut/2-csmf/adult-csmf.csv", stringsAsFactors = FALSE)
           rv$fitMAdult <- svaCSMFAdult[order(svaCSMFAdult[, "male"], decreasing = TRUE),
@@ -552,9 +604,10 @@ server <- function(input, output, session) {
           names(rv$fitFAdult) <- c("cause34", "csmf")
           rownames(rv$fitFAdult) <- NULL
         }
+        if (length(adult[adult & male]) == 0) rv$fitMAdult <- NULL
+        if (length(adult[adult & female]) == 0) rv$fitFAdult <- NULL
         
         lapply(1:length(namesRuns), function (i) {
-          
           tmpNameRun <- namesRuns[i]
           groupName <- gsub("^(.)", "\\U\\1", tmpNameRun, perl = TRUE)
           rvName <- paste0("fit", groupName)
@@ -648,7 +701,7 @@ server <- function(input, output, session) {
               paste("No Summary for", groupName, "(not enough deaths for analysis)")
             })
           }
-          if(is.null(rv[[rvName]])) rv[[tmpNameRun]] <- NULL
+          #if(is.null(rv[[rvName]])) rv[[tmpNameRun]] <- NULL
         })
         if (dir.exists("fontconfig")) unlink("fontconfig", recursive = TRUE, force = TRUE)
       }

@@ -30,7 +30,9 @@ RUN pip3.7 install pip setuptools wheel --upgrade
 RUN pip3.7 install -r /home/shiny/GitHub/pyCrossVA/requirements.txt
 RUN cd /home/shiny/GitHub/pyCrossVA; python3.7 setup.py install
 RUN R CMD javareconf
-RUN R -e "install.packages(c('glue', 'shinyjs', 'openVA', 'CrossVA'), repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages(c('glue', 'shinyjs', 'openVA'), repos='http://cran.rstudio.com/')"
+RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/InterVA5
+RUN R CMD INSTALL /home/shiny/GitHub/InterVA5/InterVA5_1.1.1.tar.gz
 RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/openVA_App
 RUN R CMD INSTALL /home/shiny/GitHub/openVA_App/pkg
 
@@ -49,4 +51,4 @@ RUN chown -R shiny:shiny /usr/local/lib/R/site-library/openVAapp
 # docker run --rm --user shiny -p 3838:3838 -v /srv/shinylog/:/var/log/shiny-server/ openVA_App
 
 # Open app at:
-# localhost:3838/openVAapp
+# localhost:3838/openVA_App

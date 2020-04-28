@@ -11,7 +11,7 @@ Launch openVA shiny app in internet browser
 }
 \examples{
 \dontrun{
-library(shinyVA)
+library(openVAapp)
 launchApp()
 }
 }

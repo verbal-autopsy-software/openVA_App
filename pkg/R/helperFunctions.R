@@ -42,8 +42,6 @@ indivCOD <- function (x, top = 3) {
 #' Format InterVA5 & InSilicoVA summary objects to write as CSV file
 #'
 #' @param x A summary of object returned from openVA::codeVA()
-#' @param top An integer specifying the number of top causes included
-#' in the results.
 #'
 #' @export
 #'
@@ -51,12 +49,12 @@ csmfSummaryCSV <- function (x) {
 
   alg <- class(x)
   if (grepl("interVA", alg)) {
-    capturedHead <- capture.output(print(x))[1:5]
-    capturedTail <- tail(capture.output(print(x)), n = 9)
+    capturedHead <- utils::capture.output(print(x))[1:5]
+    capturedTail <- utils::tail(utils::capture.output(print(x)), n = 9)
     #startTail <- which(grepl('Top', capturedTail)) - 1
     top <- x$top
   } else {
-    capturedHead <- capture.output(print(x))[1:8]
+    capturedHead <- utils::capture.output(print(x))[1:8]
     capturedTail <- NULL
     top <- x$showTop
   }
@@ -88,7 +86,7 @@ csmfSummaryCSV <- function (x) {
   if (!is.null(capturedTail)) {
     rowStart <- rowStop + 1
     rowStop <- rowStart + 2
-    outMat[rowStart:rowStop, ] <- matrix(c(#capturedTail[1:2], 
+    outMat[rowStart:rowStop, ] <- matrix(c(
                                            "", "Top 6 Circumstances of Mortality Category:",
                                            "cause", "", "", "likelihood"),
                                          nrow = 3)
@@ -225,7 +223,10 @@ sepVAResults <- function (x) {
 #' Separate InterVA5 log messages by age and sex.
 #'
 #' @param x A fitted object returned from openVA::codeVA()
-#' 
+#' @param names_runs Character vector with names of demographic
+#'   groups to include in the stratification of results.
+#'   Possible values include: all, male, female, neonate, child,
+#'   adult, mNeonate, mChild, mAdult, fNeonate, fChild, and fAdult.
 #' @param log_file String with path to log file.
 #'
 #' @export
@@ -279,32 +280,6 @@ sepVALog <- function (x, names_runs, log_file) {
 }
 
 
-#' Create CSMF plot with Undetermined for InterVA4 Output
-#'
-#' @param x A fitted object returned from openVA::codeVA()
-#' @param top An integer specifying the number of top causes included
-#' in the results.
-#'
-#' @export
-#'
-CSMF2 <- function (x, top) {
-
-  csmf  <- InterVA4::CSMF(x, InterVA.rule=TRUE, noplot=TRUE, min.prob=.00001)
-  csmf2 <- sort(csmf, decreasing=TRUE)[1:top]
-  isUndet <- "Undetermined" %in% names(csmf2)
-  if(isUndet){
-    idUndet <- which(names(csmf2) == "Undetermined")
-    newBars <- c(csmf2[-idUndet], csmf2[idUndet])
-    par(las = 2)
-    par(mar = c(5, 15, 4, 2))
-    barplot(newBars[top:1], horiz=TRUE, names.arg=names(newBars)[top:1],
-            cex.names = 0.8, xlab = "Probability",
-            col = rev(grey.colors(length(newBars))))
-  } else{
-    InterVA4::CSMF(x, InterVA.rule=TRUE, min.prob=.00001)
-  }
-}
-
 #' Return list of countries and abbreviations for Tariff2 input
 #'
 #'
@@ -353,7 +328,7 @@ smartVA_countries <- function () {
     "Comoros" = "COM",
     "Congo" = "COG",
     "Costa Rica" = "CRI",
-    "Cote d’Ivoire" = "CIV",
+    "Cote d'Ivoire" = "CIV",
     "Croatia" = "HRV",
     "Cuba" = "CUB",
     "Cyprus" = "CYP",
