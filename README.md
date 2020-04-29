@@ -8,10 +8,10 @@ dependencies are also available as a Docker image at
 
 ## Installing and Running openVA app
 
-The dependencies for the openVA app include R, Java, and Python (*both* versions 2.7 and >=3.6).  
+The dependencies for the openVA app include R, Java, Python (version >=3.6 *and* version 2.7 if you wish to run the 
+Tariff2 algorithm), and [pyCrossVA](https://github.com/verbal-autopsy-software/pyCrossVA).  If you wish to run the Tariff2 algorithm, [SmartVA-Analyze](https://github.com/ihmeuw/SmartVA-Analyze/releases) (command line version) must also be installed []()
 
-To run the openVA app: (1) install Java Development Kit; (2) install Python 2.7 and Python 3.6;
-(3) install [**R**](https://cran.r-project.org/); and (4) start **R** and install the necessary packages with the following command:
+After satisfying the dependencies, install and run the openVA app with the following commands in R:
 
 ```r
 install.packages(c("openVA", "shinyjs", "devtools"), dependencies = TRUE)
