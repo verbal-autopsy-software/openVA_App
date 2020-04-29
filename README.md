@@ -1,12 +1,17 @@
 # openVA app
 
-Analyze Verbal Autopsy (VA) data with the InSilicoVA, InterVA5, and Tariff2 algorithms using the openVA app, available from this repository
-in the form of an R package (in the pkg folder).  The app can process VA data from the 2016 WHO VA instrument (versions 1.4.1 and 1.5.1) and
-the PHMRC Shortened Questionnaire.  Results are rendered in the app and can be saved in CSV and PDF formats.  The openVA app and all the
-dependencies are also available as a Docker image at
+Analyze Verbal Autopsy (VA) data with the InSilicoVA, InterVA5, and Tariff2 algorithms using the openVA app, available 
+from this repository in the form of an R package (in the pkg folder).  The app can process VA data from the 2016 WHO VA 
+instrument (versions 1.4.1 and 1.5.1) and the PHMRC Shortened Questionnaire.  Results are rendered in the app and can be 
+saved in CSV and PDF formats.  The openVA app and all the dependencies are also available as a Docker image at
 [https://hub.docker.com/r/openvateam/openva_app](https://hub.docker.com/r/openvateam/openva_app).
 
 ## Installing and Running openVA app
+
+The recommended way to install and use the openVA app is by installing Docker Desktop and then downloading and running
+the GUI located in (realeases)[https://github.com/verbal-autopsy-software/openVA_App/releases].
+
+## Non-Docker Usage
 
 The dependencies for the openVA app include R, Java, Python (version >=3.6 *and* version 2.7 if you wish to run the 
 Tariff2 algorithm), and [pyCrossVA](https://github.com/verbal-autopsy-software/pyCrossVA).  If you wish to run the Tariff2 algorithm, [SmartVA-Analyze](https://github.com/ihmeuw/SmartVA-Analyze/releases) (command line version) must also be installed []()
