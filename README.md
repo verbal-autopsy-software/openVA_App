@@ -9,7 +9,7 @@ saved in CSV and PDF formats.  The openVA app and all the dependencies are also 
 ## Installing and Running openVA app
 
 The recommended way to install and use the openVA app is by installing Docker Desktop and then downloading and running
-the GUI located in (realeases)[https://github.com/verbal-autopsy-software/openVA_App/releases].
+the GUI located in [releases](https://github.com/verbal-autopsy-software/openVA_App/releases).
 
 ## Non-Docker Usage
 
