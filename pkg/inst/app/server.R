@@ -113,6 +113,7 @@ server <- function(input, output, session) {
     shinyjs::disable("downloadWarnings10")
     shinyjs::disable("downloadWarnings11")
     shinyjs::disable("downloadWarnings12")
+    shinyjs::disable("downloadEverything")
 
     progress <- shiny::Progress$new()
     msg <- paste("Starting openVA...(this may take a while)")
@@ -232,45 +233,6 @@ server <- function(input, output, session) {
       showNotification(msg, duration = NULL, type = "error", closeButton = FALSE,
                        action = a(href = "javascript:history.go(0);", "reset?"))
     } else {
-      # object needed to render table of demographic variables
-      # names(records) <- tolower(names(records))
-      # whoData <- "i004a" %in% names(records)
-      # all <- rep(TRUE, nrow(records))
-      # male <- rep(FALSE, length(records$i019a))
-      # male[records$i019a == "y"] <- TRUE
-      # female <- rep(FALSE, length(records$i019b))
-      # female[records$i019b == "y"] <- TRUE
-      # neonate <- rep(FALSE, length(records$i022g))
-      # neonate[records$i022g == "y"] <- TRUE
-      # child  <- rep(FALSE, length(records$i022f))
-      # child[records$i022f == "y" | records$i022e == "y" | records$i022d == "y"] <- TRUE
-      # adult <- rep(FALSE, length(records$i022a))
-      # adult[records$i022a == "y" | records$i022b == "y" | records$i022c == "y"] <- TRUE
-      # mNeonate <- rep(FALSE, length(records$i022g))
-      # mNeonate[male & neonate] <- TRUE
-      # mChild <- rep(FALSE, length(records$i022f))
-      # mChild[male & child] <- TRUE
-      # mAdult <- rep(FALSE, length(records$i022a))
-      # mAdult[male & adult] <- TRUE
-      # fNeonate <- rep(FALSE, length(records$i022g))
-      # fNeonate[female & neonate] <- TRUE
-      # fChild <- rep(FALSE, length(records$i022f))
-      # fChild[female & child] <- TRUE
-      # fAdult <- rep(FALSE, length(records$i022a))
-      # fAdult[female & adult] <- TRUE
-      
-      # ageGroup <- rep(NA, length(records$i022a))
-      # ageGroup[neonate] <- "neonate"
-      # ageGroup[child]  <- "child"
-      # ageGroup[adult]  <- "ages >14"
-      # 
-      # counts <- c(length(male[male]), length(female[female]),
-      #             length(neonate[neonate]), length(child[child]),
-      #             length(adult[adult]),
-      #             length(records$ID[records$i022a=="." & records$i022b=="." & records$i022c=="." &
-      #                                 records$i022d=="." & records$i022e=="." & records$i022f=="." &
-      #                                 records$i022g=="."]),
-      #             nrow(records))
       
       # InSilico & InterVA5
       if (input$algorithm == "InSilicoVA" | input$algorithm == "InterVA5") {
@@ -454,6 +416,53 @@ server <- function(input, output, session) {
           }
           if(is.null(rv[[rvName]])) rv[[tmpNameRun]] <- NULL
         })
+        output$downloadEverything <- downloadHandler(
+          filename = "results.zip",
+          content = function (file) {
+            files <- NULL
+            for (i in 1:length(namesRuns)) {
+              tmpNameRun <- namesRuns[i]
+              groupName <- gsub("^(.)", "\\U\\1", tmpNameRun, perl = TRUE)
+              rvName <- paste0("fit", groupName)
+              if (input$algorithm == "InSilicoVA" ) {
+                orderedCSMF <- summary(rv[[rvName]])$csmf.ordered[, 1]
+              } else {
+                orderedCSMF <- summary(rv[[rvName]])$csmf.ordered[, 2]
+              }
+              newTop <- min(input$topDeaths, sum(orderedCSMF > 0))
+              rvNameIndivCOD <- paste0("indivCOD", groupName)
+              rvNameCSMFSummary <- paste0("csmfSummary", groupName)
+              if(!is.null(rv[[rvName]])){
+                # individual COD
+                tmpFileName <- paste0("individual-causes-", namesRuns[i], "-", input$algorithm, "-", Sys.Date(), ".csv")
+                write.csv(rv[[rvNameIndivCOD]], file = tmpFileName, row.names = FALSE)
+                files <- c(files, tmpFileName)
+                # summary
+                tmpFileName <- paste0("results-", namesRuns[i], "-", input$algorithm, "-", Sys.Date(), ".csv")
+                write.table(rv[[rvNameCSMFSummary]], file = tmpFileName, row.names = FALSE, col.names = FALSE)
+                files <- c(files, tmpFileName)
+                # plot
+                tmpFileName <- paste0("plot-", tmpNameRun, "-", input$algorithm, "-", Sys.Date(), ".pdf")
+                if (file.exists(tmpFileName)) file.remove(tmpFileName)
+                plotVA(rv[[rvName]], top = newTop)
+                ggsave(tmpFileName, device="pdf")
+                files <- c(files, tmpFileName)
+                # warnings
+                tmpFileName <- paste0(input$algorithm, "-warnings-", namesRuns[i], ".txt")
+                if(file.exists(tmpFileName)) file.remove(tmpFileName)
+                file.create(tmpFileName)
+                cat("Warnings and Errors from", input$algorithm, "\t", namesRuns[i], "\t", date(),
+                    "\n", file = tmpFileName)
+                ovaLogFileName <- ifelse(input$algorithm == "InSilicoVA",
+                                         paste0(tmpDirResults[i], "/errorlog_insilico.txt"),
+                                         paste0(tmpDirResults[i], "/errorlogV5.txt"))
+                file.append(tmpFileName, ovaLogFileName)
+                files <- c(files, tmpFileName)
+              }
+            }
+            zip(file, files)
+          }
+        )
       }
       # Tariff2
       if (input$algorithm == "Tariff2") {
@@ -465,7 +474,7 @@ server <- function(input, output, session) {
         tmpOut <- getData()
         names(tmpOut) <- gsub("\\.", ":", names(tmpOut))
         write.csv(tmpOut, file = "tmpOut.csv", na = "", row.names = FALSE)
-        svaCall <- paste("smartva", "--country", input$svaCountry,
+        svaCall <- paste("./smartva", "--country", input$svaCountry,
                          "--hiv", ifelse(input$svaHIV, "True", "False"),
                          "--malaria", ifelse(input$svaMalaria, "True", "False"),
                          "--hce", ifelse(input$svaHCE, "True", "False"),
@@ -641,16 +650,21 @@ server <- function(input, output, session) {
             # CSMF Plot
             plotName <- paste0("plot-", tmpNameRun, "-", input$algorithm, "-", Sys.Date(), ".pdf")
             if (file.exists(plotName)) file.remove(plotName)
-            pdf(plotName)
+            #pdf(plotName)
             marOld <- par()$mar
             par(mar = c(5, 10, 4, 2))
-            barplot(height = rev(rv[[rvName]]$csmf[1:newTop]), horiz = TRUE,
-                    #names = gsub(" |\\/", "\n", rev(rv[[rvName]]$cause34[1:newTop])),
-                    names = rev(rv[[rvName]]$cause34[1:newTop]),
-                    col = grey.colors(length(rv[[rvName]]$csmf[1:newTop])),
-                    las = 1, cex.names = .8, tcl = -0.2, mgp = c(3, .25, 0))
+            barplot.df <- data.frame(Probability = rev(rv[[rvName]]$csmf[1:newTop]), 
+                                     Causes = rev(rv[[rvName]]$cause34[1:newTop]))
+            g <- ggplot2::ggplot(barplot.df,
+                                 ggplot2::aes(x = stats::reorder(Causes, seq(1:length(Causes))),
+                                              y = Probability,
+                                              fill = stats::reorder(Causes, seq(1:length(Causes))))) +
+              ggplot2::geom_bar(stat="identity") + ggplot2::xlab("") + ggplot2::ylab("")
+            g <- g + ggplot2::coord_flip() +
+              ggplot2::scale_fill_grey(start = 0.8, end = 0.2) +
+              ggplot2::theme(legend.position = "none")
+            ggsave(plotName, device="pdf")
             par(mar = marOld)
-            dev.off()
             downloadPlot <- paste0("downloadPlot", namesNumericCodes[tmpNameRun])
             output[[downloadPlot]] <- downloadHandler(
               filename = plotName,
@@ -669,12 +683,17 @@ server <- function(input, output, session) {
               output[[plotGrp]] <- renderPlot({
                 marOld <- par()$mar
                 par(mar = c(5, 10, 4, 2))
-                barplot(height = rev(rv[[rvName]]$csmf[1:newTop]), horiz = TRUE,
-                        #names = gsub(" |\\/", "\n", rev(rv[[rvName]]$cause34[1:newTop])),
-                        names = rev(rv[[rvName]]$cause34[1:newTop]),
-                        col = grey.colors(length(rv[[rvName]]$csmf[1:newTop])),
-                        las = 1, cex.names = .8, tcl = -0.2,
-                        mgp = c(3, .25, 0))
+                barplot.df <- data.frame(Probability = rev(rv[[rvName]]$csmf[1:newTop]), 
+                                         Causes = rev(rv[[rvName]]$cause34[1:newTop]))
+                g <- ggplot2::ggplot(barplot.df,
+                                     ggplot2::aes(x = stats::reorder(Causes, seq(1:length(Causes))),
+                                                  y = Probability,
+                                                  fill = stats::reorder(Causes, seq(1:length(Causes))))) +
+                  ggplot2::geom_bar(stat="identity") + ggplot2::xlab("") + ggplot2::ylab("")
+                g <- g + ggplot2::coord_flip() +
+                  ggplot2::scale_fill_grey(start = 0.8, end = 0.2) +
+                  ggplot2::theme(legend.position = "none")
+                print(g)
                 par(mar = marOld)
               })
             }
@@ -703,6 +722,49 @@ server <- function(input, output, session) {
           }
           #if(is.null(rv[[rvName]])) rv[[tmpNameRun]] <- NULL
         })
+        output$downloadEverything <- downloadHandler(
+          filename = "results.zip",
+          content = function (file) {
+            files <- NULL
+            for (i in 1:length(namesRuns)) {
+              tmpNameRun <- namesRuns[i]
+              groupName <- gsub("^(.)", "\\U\\1", tmpNameRun, perl = TRUE)
+              rvName <- paste0("fit", groupName)
+              newTop <- min(input$topDeaths, sum(rv[[rvName]]$csmf > 0))
+              rvNameIndivCOD <- paste0("indivCOD", groupName)
+              rvNameCSMFSummary <- paste0("csmfSummary", groupName)
+              if(!is.null(rv[[rvName]])){
+                # individual COD
+                tmpFileName <- paste0("individual-causes-", namesRuns[i], "-", input$algorithm, "-", Sys.Date(), ".csv")
+                write.csv(indCOD[get(namesRuns[i]),], file = tmpFileName, row.names = FALSE)
+                files <- c(files, tmpFileName)
+                # summary
+                tmpFileName <- paste0("results-", namesRuns[i], "-", input$algorithm, "-", Sys.Date(), ".csv")
+                write.csv(print(rv[[rvName]]), file = tmpFileName)
+                files <- c(files, tmpFileName)
+                # plot
+                tmpFileName <- paste0("plot-", tmpNameRun, "-", input$algorithm, "-", Sys.Date(), ".pdf")
+                if (file.exists(tmpFileName)) file.remove(tmpFileName)
+                marOld <- par()$mar
+                par(mar = c(5, 10, 4, 2))
+                barplot.df <- data.frame(Probability = rev(rv[[rvName]]$csmf[1:newTop]), 
+                                         Causes = rev(rv[[rvName]]$cause34[1:newTop]))
+                g <- ggplot2::ggplot(barplot.df,
+                                     ggplot2::aes(x = stats::reorder(Causes, seq(1:length(Causes))),
+                                                  y = Probability,
+                                                  fill = stats::reorder(Causes, seq(1:length(Causes))))) +
+                  ggplot2::geom_bar(stat="identity") + ggplot2::xlab("") + ggplot2::ylab("")
+                g <- g + ggplot2::coord_flip() +
+                  ggplot2::scale_fill_grey(start = 0.8, end = 0.2) +
+                  ggplot2::theme(legend.position = "none")
+                ggsave(tmpFileName, device="pdf")
+                par(mar = marOld)
+                files <- c(files, tmpFileName)
+              }
+            }
+            zip(file, files)
+          }
+        )
         if (dir.exists("fontconfig")) unlink("fontconfig", recursive = TRUE, force = TRUE)
       }
       progress$close()
@@ -747,6 +809,7 @@ server <- function(input, output, session) {
       shinyjs::enable("algorithm")
       shinyjs::enable("downloadAgeDist")
       shinyjs::enable("downloadMetadata")
+      shinyjs::enable("downloadEverything")
       # HERE -- but this in an apply statement
       if (input$byAll) {
         shinyjs::enable("downloadPlot1")
@@ -898,4 +961,5 @@ server <- function(input, output, session) {
   shinyjs::disable("downloadWarnings10")
   shinyjs::disable("downloadWarnings11")
   shinyjs::disable("downloadWarnings12")
+  shinyjs::disable("downloadEverything")
 }

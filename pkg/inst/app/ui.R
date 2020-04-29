@@ -156,6 +156,9 @@ ui <- fluidPage(
                           downloadButton("downloadMetadata", "Download Metadata Used to Produce Results (.csv)"),
                           br(),
                           downloadButton("downloadAgeDist", "Download Plot of Age Distribution (.pdf)"),
+                          br(),
+                          downloadButton("downloadEverything", 
+                            "Download zip file with results from each analysis (takes a few seconds)"),
                           br(), br(),
                           fluidRow(
                             column(4, "Results for All Records"),
