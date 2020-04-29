@@ -29,7 +29,7 @@ R may ask if you would like to update some of the packages openVA app depends on
 the option you choose (e.g., 1: All, 2: CRAN packages only; 3: None). 
 
 
-## Troubleshooting
+### Troubleshooting installation of R package
 
 InSilicoVA depends on the **R** package rJava.  It is common to run into problems with loading rJava (and thus InSilicoVA).  
 
