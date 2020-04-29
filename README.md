@@ -61,5 +61,10 @@ InSilicoVA depends on the **R** package rJava.  It is common to run into problem
   [https://www.java.com/en/download/help/path.xml](https://www.java.com/en/download/help/path.xml).
 
 
+## Video Tutorials
+Installation Guide (Windows): https://youtu.be/C2EPOpTzJTk
+
+Analysis Guide: https://youtu.be/K1wkSbTwxkg
+
 ## Licence
 GNU General Public License v3.0
