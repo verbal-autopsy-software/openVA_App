@@ -1,20 +1,30 @@
-#' @import shiny 
+#' @import shiny
 server <- function(input, output, session) {
 
   ## Read in data
   rvFile <- reactiveValues(clear = 0)
   getData <- reactive({
     vaData <- input$readIn
-    if(is.null(vaData)){
-      return(NULL)
+    if (is.null(vaData)) {
+      return (NULL)
     }
-    read.csv(vaData$datapath, stringsAsFactors = FALSE)
+    read.csv(input$readIn$datapath, stringsAsFactors = FALSE)
+  })
+  output$csvCheck <- renderText({
+    if (is.null(input$readIn$datapath)) {
+      return ("")
+    }
+    #vaData <- input$readIn
+    validate(
+      need(tools::file_ext(input$readIn$datapath) %in% c(
+        "text/csv", "text/comma-separated-values,text/plain", "csv"), 
+        "Wrong file format, please use CSV file")
+      )
   })
   output$fileUploaded <- reactive({
     return(!is.null(getData()))
   })
   outputOptions(output, "fileUploaded", suspendWhenHidden = FALSE)
-
   selectedAlgorithm <- reactive({
     switch(input$algorithm,
            "InSilicoVA" = 1, "InterVA5" = 2, "Tariff2" = 3)
@@ -33,8 +43,8 @@ server <- function(input, output, session) {
   rv$fNeonate  <- TRUE
   rv$fChild    <- TRUE
   rv$fAdult    <- TRUE
-  
-  
+
+
   observeEvent(input$processMe, {
 
     if (names(dev.cur()) != "null device") dev.off()
@@ -52,12 +62,12 @@ server <- function(input, output, session) {
     rv$fitNeonate <- NULL
     rv$fitChild   <- NULL
     rv$fitAdult   <- NULL
-    rv$fitMNeonate  <- TRUE
-    rv$fitMChild    <- TRUE
-    rv$fitMAdult    <- TRUE
-    rv$fitFNeonate  <- TRUE
-    rv$fitFChild    <- TRUE
-    rv$fitFAdult    <- TRUE
+    rv$fitMNeonate  <- NULL
+    rv$fitMChild    <- NULL
+    rv$fitMAdult    <- NULL
+    rv$fitFNeonate  <- NULL
+    rv$fitFChild    <- NULL
+    rv$fitFAdult    <- NULL
 
     shinyjs::disable("processMe")
     shinyjs::disable("algorithm")
@@ -214,7 +224,7 @@ server <- function(input, output, session) {
       progress$close()
       rvFile$clear <- 1
       observe(rvFile$clear, shinyjs::reset("readIn"))
-      msg <- "openVA App does not run InSilicoVA or InterVA5 with PHMRC 
+      msg <- "openVA App does not run InSilicoVA or InterVA5 with PHMRC
       data due to large number of missing items.  We may enable this in future versions."
       showNotification(msg, duration = NULL, type = "error", closeButton = FALSE,
                        action = a(href = "javascript:history.go(0)", "reset?"))
@@ -233,7 +243,7 @@ server <- function(input, output, session) {
       showNotification(msg, duration = NULL, type = "error", closeButton = FALSE,
                        action = a(href = "javascript:history.go(0);", "reset?"))
     } else {
-      
+
       # InSilico & InterVA5
       if (input$algorithm == "InSilicoVA" | input$algorithm == "InterVA5") {
         ageGroup <- rep(NA, length(records$i022a))
@@ -299,12 +309,12 @@ server <- function(input, output, session) {
           progress$set(message = "done with analyses", value = 5/6)
         }
         lapply(1:length(namesRuns), function (i) {
-          
+
           tmpNameRun <- namesRuns[i]
           groupName <- gsub("^(.)", "\\U\\1", tmpNameRun, perl = TRUE)
           rvName <- paste0("fit", groupName)
           rv[[rvName]] <- vaOut[[tmpNameRun]]
-          
+
           titleDescriptiveStats <- paste0("titleDescriptiveStats", groupName)
           output[[titleDescriptiveStats]] <- renderText({
             "Counts of Deaths by Sex & Age"
@@ -319,19 +329,19 @@ server <- function(input, output, session) {
                                        "Age is Missing", "Total")))
             }
           })
-          
+
           # produce outputs
           if (!is.null(rv[[rvName]])) {
             rvNameIndivCOD <- paste0("indivCOD", groupName)
             rv[[rvNameIndivCOD]] <- indivCOD(rv[[rvName]], top = 3)
-            
+
             if (input$algorithm == "InSilicoVA" ) {
               orderedCSMF <- summary(rv[[rvName]])$csmf.ordered[, 1]
             } else {
               orderedCSMF <- summary(rv[[rvName]])$csmf.ordered[, 2]
             }
             newTop <- min(input$topDeaths, sum(orderedCSMF > 0))
-            
+
             # CSMF Summary
             titleSummary <- paste0("titleSummary", groupName)
             output[[titleSummary]] <- renderText({
@@ -474,7 +484,7 @@ server <- function(input, output, session) {
         tmpOut <- getData()
         names(tmpOut) <- gsub("\\.", ":", names(tmpOut))
         write.csv(tmpOut, file = "tmpOut.csv", na = "", row.names = FALSE)
-        svaCall <- paste("./smartva", "--country", input$svaCountry,
+        svaCall <- paste("smartva", "--country", input$svaCountry,
                          "--hiv", ifelse(input$svaHIV, "True", "False"),
                          "--malaria", ifelse(input$svaMalaria, "True", "False"),
                          "--hce", ifelse(input$svaHCE, "True", "False"),
@@ -482,7 +492,7 @@ server <- function(input, output, session) {
                          "--figures False",
                          "tmpOut.csv", "svaOut")
         system(svaCall)
-        
+
         # render demographic table
         indCOD <- read.csv("svaOut/1-individual-cause-of-death/individual-cause-of-death.csv",
                            stringsAsFactors = FALSE)
@@ -513,7 +523,7 @@ server <- function(input, output, session) {
         fChild[female & child] <- TRUE
         fAdult <- rep(FALSE, nrow(indCOD))
         fAdult[female & adult] <- TRUE
-        
+
         counts <- c(length(male[male]), length(female[female]),
                     length(neonate[neonate]), length(child[child]),
                     length(adult[adult]),
@@ -615,12 +625,12 @@ server <- function(input, output, session) {
         }
         if (length(adult[adult & male]) == 0) rv$fitMAdult <- NULL
         if (length(adult[adult & female]) == 0) rv$fitFAdult <- NULL
-        
+
         lapply(1:length(namesRuns), function (i) {
           tmpNameRun <- namesRuns[i]
           groupName <- gsub("^(.)", "\\U\\1", tmpNameRun, perl = TRUE)
           rvName <- paste0("fit", groupName)
-          
+
           titleDescriptiveStats <- paste0("titleDescriptiveStats", groupName)
           output[[titleDescriptiveStats]] <- renderText({
             "Counts of Deaths by Sex & Age"
@@ -653,7 +663,7 @@ server <- function(input, output, session) {
             #pdf(plotName)
             marOld <- par()$mar
             par(mar = c(5, 10, 4, 2))
-            barplot.df <- data.frame(Probability = rev(rv[[rvName]]$csmf[1:newTop]), 
+            barplot.df <- data.frame(Probability = rev(rv[[rvName]]$csmf[1:newTop]),
                                      Causes = rev(rv[[rvName]]$cause34[1:newTop]))
             g <- ggplot2::ggplot(barplot.df,
                                  ggplot2::aes(x = stats::reorder(Causes, seq(1:length(Causes))),
@@ -683,7 +693,7 @@ server <- function(input, output, session) {
               output[[plotGrp]] <- renderPlot({
                 marOld <- par()$mar
                 par(mar = c(5, 10, 4, 2))
-                barplot.df <- data.frame(Probability = rev(rv[[rvName]]$csmf[1:newTop]), 
+                barplot.df <- data.frame(Probability = rev(rv[[rvName]]$csmf[1:newTop]),
                                          Causes = rev(rv[[rvName]]$cause34[1:newTop]))
                 g <- ggplot2::ggplot(barplot.df,
                                      ggplot2::aes(x = stats::reorder(Causes, seq(1:length(Causes))),
@@ -747,7 +757,7 @@ server <- function(input, output, session) {
                 if (file.exists(tmpFileName)) file.remove(tmpFileName)
                 marOld <- par()$mar
                 par(mar = c(5, 10, 4, 2))
-                barplot.df <- data.frame(Probability = rev(rv[[rvName]]$csmf[1:newTop]), 
+                barplot.df <- data.frame(Probability = rev(rv[[rvName]]$csmf[1:newTop]),
                                          Causes = rev(rv[[rvName]]$cause34[1:newTop]))
                 g <- ggplot2::ggplot(barplot.df,
                                      ggplot2::aes(x = stats::reorder(Causes, seq(1:length(Causes))),
@@ -782,7 +792,7 @@ server <- function(input, output, session) {
       } else {
         algCall <- modelArgs
       }
-      
+
       algCall <- unlist(algCall)
       metaData[4,] <- c("openVA Arguments",
                         paste(names(algCall), algCall, sep = ": ", collapse = "; "))
@@ -804,7 +814,7 @@ server <- function(input, output, session) {
           file.copy(filename, file)
         }
       )
-      
+
       shinyjs::enable("processMe")
       shinyjs::enable("algorithm")
       shinyjs::enable("downloadAgeDist")

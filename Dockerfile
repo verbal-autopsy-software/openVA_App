@@ -21,14 +21,19 @@ RUN apt-get update && apt-get install -y \
     git
 
 # Install R packages that are required
-RUN cd /opt; wget https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz
-RUN cd /opt; tar -xf Python-3.7.5.tgz; cd Python-3.7.5; ./configure --enable-optimizations --enable-shared; sudo make altinstall
+WORKDIR /opt
+RUN wget https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz
+RUN tar -xf Python-3.7.5.tgz
+WORKDIR Python-3.7.5
+RUN ./configure --enable-optimizations --enable-shared
+RUN sudo make altinstall
 RUN mkdir /home/shiny/GitHub
 RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/pyCrossVA -b openVA_App 
 RUN sudo ldconfig /usr/local/lib
 RUN pip3.7 install pip setuptools wheel --upgrade
 RUN pip3.7 install -r /home/shiny/GitHub/pyCrossVA/requirements.txt
-RUN cd /home/shiny/GitHub/pyCrossVA; python3.7 setup.py install
+WORKDIR /home/shiny/GitHub/pyCrossVA
+RUN python3.7 setup.py install
 RUN R CMD javareconf
 RUN R -e "install.packages(c('glue', 'shinyjs', 'openVA'), repos='http://cran.rstudio.com/')"
 RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/InterVA5
@@ -43,7 +48,7 @@ ENV PATH="/opt/SmartVA:${PATH}"
 
 # Set up app
 RUN mkdir /srv/shiny-server/openVA_App
-RUN echo "appDir <- system.file('app', package = 'openVAapp'); library(openVAapp); shinyAppDir(appDir)" > /srv/shiny-server/openVA_App/app.R
+RUN echo "appDir <- system.file('app', package = 'openVAapp'); options(shiny.maxRequestSize = 100*1024^2); library(openVAapp); shinyAppDir(appDir)" > /srv/shiny-server/openVA_App/app.R
 RUN chown -R shiny:shiny /srv/shiny-server
 RUN chown -R shiny:shiny /usr/local/lib/R/site-library/openVAapp
 

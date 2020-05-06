@@ -1,6 +1,10 @@
 #' @import shiny
 ui <- fluidPage(
 
+  tags$head(
+    tags$style(HTML(".shiny-output-error-validation {
+                    color: #ff0000;
+                    font-weight: bold;}"))),
   titlePanel("Analyze Verbal Autopsy Data with openVA"),
   p("Developed by the openVA team", a(href="https://openva.net", "(https://openVA.net)")),
   p("This work is supported by: National Institutes of Health,",
@@ -16,9 +20,9 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       fileInput("readIn",
-                "Upload your own data here",
+                "Upload your own data here (CSV file)",
                 multiple = FALSE,
-                accept = NULL),
+                accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
       h3("Choose your preferences"),
       br(),
       checkboxInput("byAll", "Include an analysis of all records?", TRUE),
@@ -63,6 +67,7 @@ ui <- fluidPage(
     ),
     ## Outputs
     mainPanel(
+      textOutput("csvCheck"),
       navbarPage(title = "Results",
                  tabPanel(title = "All",
                           h4(textOutput("titleDescriptiveStatsAll")),
@@ -157,13 +162,13 @@ ui <- fluidPage(
                           br(),
                           downloadButton("downloadAgeDist", "Download Plot of Age Distribution (.pdf)"),
                           br(),
-                          downloadButton("downloadEverything", 
+                          downloadButton("downloadEverything",
                             "Download zip file with results from each analysis (takes a few seconds)"),
                           br(), br(),
                           fluidRow(
                             column(4, "Results for All Records"),
                             column(4, "Results for Male Records"),
-                            column(4, "Results for Female Records")), 
+                            column(4, "Results for Female Records")),
                           column(12, br()),
                           fluidRow(
                             column(4, downloadButton("downloadCOD1", "Causes of Death (.csv)")),
