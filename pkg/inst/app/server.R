@@ -292,10 +292,12 @@ server <- function(input, output, session) {
           vaOut <- parallel::parLapply(cl, 1:length(namesRuns), function (i) {
             set.seed(seeds[i])
             modelArgs$data <- records[get(namesRuns[i]), ]
+            modelArgs$inputID <- modelArgs$data[,1]
             modelArgs$directory <- tmpDirResults[i]
             okRun <- try(
               do.call(openVA::codeVA, modelArgs)
             )
+            okRun$ID_orig <- records[get(namesRuns[i]), 1]
             okRun
           })
           parallel::stopCluster(cl)
@@ -303,7 +305,9 @@ server <- function(input, output, session) {
           names(vaOut) <- namesRuns
         } else {
           modelArgs$data <- records
+          modelArgs$inputID <- modelArgs$data[,1]
           okRun <- do.call(openVA::codeVA, modelArgs)
+          okRun$ID_orig <- records[, 1]
           vaOut <- sepVAResults(okRun)
           sepVALog(okRun, namesRuns, "errorlogV5.txt")
           progress$set(message = "done with analyses", value = 5/6)
@@ -332,9 +336,9 @@ server <- function(input, output, session) {
 
           # produce outputs
           if (!is.null(rv[[rvName]])) {
-            rvNameIndivCOD <- paste0("indivCOD", groupName)
+            rvNameIndivCOD <- paste0("indivCOD", groupName)            
             rv[[rvNameIndivCOD]] <- indivCOD(rv[[rvName]], top = 3)
-
+            
             if (input$algorithm == "InSilicoVA" ) {
               orderedCSMF <- summary(rv[[rvName]])$csmf.ordered[, 1]
             } else {

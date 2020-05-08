@@ -36,6 +36,24 @@ indivCOD <- function (x, top = 3) {
   colnames(out) <- c("ID", "Most Likely Cause", "Probability",
                      "Second Most Likely Cause", "Probability",
                      "Third Most Likely Cause", "Probability")
+  out <- data.frame(out)
+
+  # reorder output
+  if(!is.null(x$ID_orig)){
+    new <- data.frame(ID = x$ID_orig)
+    print(new)
+    print(out)
+    out <- merge(new, out, all.x = TRUE, by = "ID")
+    print(out)
+    out <- out[match(x$ID_orig, out$ID), ]
+    if(sum(is.na(out[,2])) > 0){
+        # In the future, we may want to add something here to replace NA
+    }
+    print(out)
+  }else{
+    warning("No initial order specified. The output may not be in the correct order!!")
+  }
+
   out
 }
 
