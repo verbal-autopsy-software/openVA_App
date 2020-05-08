@@ -170,7 +170,7 @@ server <- function(input, output, session) {
       data(RandomVA5)
       if (ncol(RandomVA5) != ncol(records)) badData <- badData + 1
       vaColNames <- names(RandomVA5)
-      if (badData == 0) badData <- badData + sum(vaColNames == names(records))
+      if (badData == 0) badData <- badData + sum(vaColNames != names(records))
     }
     names(records) <- tolower(names(records))
     whoData <- "i004a" %in% names(records)
