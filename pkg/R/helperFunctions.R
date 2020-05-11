@@ -158,77 +158,77 @@ sepVAResults <- function (x) {
   if (sum(keep) == 0) {
     results$male <- NULL
   } else {
-    results$male <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    results$male <- list(ID = x$ID[keep], VA5 = x$VA5[keep], ID_orig = x$ID[keep])
     class(results$male) <- class(x)
   }
   keep <- x$ID %in% idFemale
   if (sum(keep) == 0) {
     results$female <- NULL
   } else {
-    results$female <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    results$female <- list(ID = x$ID[keep], VA5 = x$VA5[keep], ID_orig = x$ID[keep])
     class(results$female) <- class(x)
   }
   keep <- x$ID %in% idNeonate
   if (sum(keep) == 0) {
     results$neonate <- NULL
   } else {
-    results$neonate <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    results$neonate <- list(ID = x$ID[keep], VA5 = x$VA5[keep], ID_orig = x$ID[keep])
     class(results$neonate) <- class(x)
   }
   keep <- x$ID %in% idChild
   if (sum(keep) == 0) {
     results$child <- NULL
   } else {
-    results$child <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    results$child <- list(ID = x$ID[keep], VA5 = x$VA5[keep], ID_orig = x$ID[keep])
     class(results$child) <- class(x)
   }
   keep <- x$ID %in% idAdult
   if (sum(keep) == 0) {
     results$adult <- NULL
   } else {
-    results$adult <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    results$adult <- list(ID = x$ID[keep], VA5 = x$VA5[keep], ID_orig = x$ID[keep])
     class(results$adult) <- class(x)
   }
   keep <- x$ID %in% idMNeonate
   if (sum(keep) == 0) {
     results$mNeonate <- NULL
   } else {
-    results$mNeonate <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    results$mNeonate <- list(ID = x$ID[keep], VA5 = x$VA5[keep], ID_orig = x$ID[keep])
     class(results$mNeonate) <- class(x)
   }
   keep <- x$ID %in% idMChild
   if (sum(keep) == 0) {
     results$mChild <- NULL
   } else {
-    results$mChild <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    results$mChild <- list(ID = x$ID[keep], VA5 = x$VA5[keep], ID_orig = x$ID[keep])
     class(results$mChild) <- class(x)
   }
   keep <- x$ID %in% idMAdult
   if (sum(keep) == 0) {
     results$mAdult <- NULL
   } else {
-    results$mAdult <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    results$mAdult <- list(ID = x$ID[keep], VA5 = x$VA5[keep], ID_orig = x$ID[keep])
     class(results$mAdult) <- class(x)
   }
   keep <- x$ID %in% idFNeonate
   if (sum(keep) == 0) {
     results$fNeonate <- NULL
   } else {
-    results$fNeonate <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    results$fNeonate <- list(ID = x$ID[keep], VA5 = x$VA5[keep], ID_orig = x$ID[keep])
     class(results$fNeonate) <- class(x)
   }
   keep <- x$ID %in% idFChild
   if (sum(keep) == 0) {
     results$fChild <- NULL
   } else {
-    results$fChild <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    results$fChild <- list(ID = x$ID[keep], VA5 = x$VA5[keep], ID_orig = x$ID[keep])
     class(results$fChild) <- class(x)
   }
   keep <- x$ID %in% idFAdult
   if (sum(keep) == 0) {
     results$fAdult <- NULL
   } else {
-    results$fAdult <- list(ID = x$ID[keep], VA5 = x$VA5[keep])
+    results$fAdult <- list(ID = x$ID[keep], VA5 = x$VA5[keep], ID_orig = x$ID[keep])
     class(results$fAdult) <- class(x)
   }
   return(results)

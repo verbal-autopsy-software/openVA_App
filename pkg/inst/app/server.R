@@ -197,6 +197,8 @@ server <- function(input, output, session) {
     fChild[female & child] <- TRUE
     fAdult <- rep(FALSE, length(records$i022a))
     fAdult[female & adult] <- TRUE
+    namesAll <- c("all", "male", "female", "neonate", "child", "adult",
+                   "mNeonate", "mChild", "mAdult", "fNeonate", "fChild", "fAdult")
     namesRuns <- c("all", "male", "female", "neonate", "child", "adult",
                    "mNeonate", "mChild", "mAdult", "fNeonate", "fChild", "fAdult")
     namesNumericCodes <- 1:12
@@ -208,8 +210,17 @@ server <- function(input, output, session) {
                    sum(neonate) > 0, sum(child) > 0, sum(adult) > 0,
                    sum(mNeonate) > 0, sum(mChild) > 0, sum(mAdult) > 0,
                    sum(fNeonate) > 0, sum(fChild) > 0, sum(fAdult) > 0)
+      nGE100 <- c(sum(adult) >= 100, sum(male) >= 100, sum(female) >= 100,
+                  sum(neonate) >= 100, sum(child) >= 100, sum(adult) >= 100,
+                  sum(mNeonate) >= 100, sum(mChild) >= 100, sum(mAdult) >= 100,
+                  sum(fNeonate) >= 100, sum(fChild) >= 100, sum(fAdult) >= 100)
       nRuns <- sum(includeRuns & nonZero)
-      namesRuns <- namesRuns[includeRuns & nonZero]
+      if (input$algorithm == "InSilicoVA") {
+        namesRuns <- namesRuns[includeRuns & nonZero & nGE100]
+      }
+      if (input$algorithm == "InterVA") {
+        namesRuns <- namesRuns[includeRuns & nonZero]
+      }
     } else {
       nRuns <- sum(includeRuns)
       namesRuns <- namesRuns[includeRuns]
@@ -422,13 +433,24 @@ server <- function(input, output, session) {
               }
             )
           }
+            if (is.null(rv[[rvName]])) {
+              titleSummary <- paste0("titleSummary", groupName)
+              output[[titleSummary]] <- renderText({
+                paste("No Summary for", groupName, "(not enough deaths for analysis)")
+              })
+            }
+          if(is.null(rv[[rvName]])) rv[[tmpNameRun]] <- NULL
+        })
+        lapply(1:length(namesAll), function (i) {
+          tmpNameRun <- namesAll[i]
+          groupName <- gsub("^(.)", "\\U\\1", tmpNameRun, perl = TRUE)
+          rvName <- paste0("fit", groupName)
           if (is.null(rv[[rvName]])) {
             titleSummary <- paste0("titleSummary", groupName)
             output[[titleSummary]] <- renderText({
-              paste("No Summary for", groupName, "(not enough deaths for analysis)")
+              paste("No Summary for", groupName, "(results not requested or not enough deaths for analysis)")
             })
           }
-          if(is.null(rv[[rvName]])) rv[[tmpNameRun]] <- NULL
         })
         output$downloadEverything <- downloadHandler(
           filename = "results.zip",
@@ -833,7 +855,11 @@ server <- function(input, output, session) {
           shinyjs::enable("downloadWarnings1")
         }
       }
-      if (input$bySex & length(male[male]) > 0) {
+      enableDownloads2 <- input$bySex & 
+        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+        (input$algorithm == "InSilicoVA" & length(male[male]) >= 100))
+      #if (input$bySex & length(male[male]) > 0) {
+      if (enableDownloads2) {
         shinyjs::enable("downloadPlot2")
         shinyjs::enable("downloadCOD2")
         shinyjs::enable("downloadData2")
@@ -841,7 +867,11 @@ server <- function(input, output, session) {
           shinyjs::enable("downloadWarnings2")
         }
       }
-      if (input$bySex & length(female[female]) > 0) {
+      enableDownloads3 <- input$bySex & 
+        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+           (input$algorithm == "InSilicoVA" & length(female[female]) >= 100))
+      #if (input$bySex & length(female[female]) > 0) {
+      if (enableDownloads3) {
         shinyjs::enable("downloadPlot3")
         shinyjs::enable("downloadCOD3")
         shinyjs::enable("downloadData3")
@@ -849,7 +879,11 @@ server <- function(input, output, session) {
           shinyjs::enable("downloadWarnings3")
         }
       }
-      if (input$byAge & length(neonate[neonate]) > 0) {
+      enableDownloads4 <- input$byAge & 
+        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+           (input$algorithm == "InSilicoVA" & length(neonate[neonate]) >= 100))
+      #if (input$byAge & length(neonate[neonate]) > 0) {
+      if (enableDownloads4) {
         shinyjs::enable("downloadPlot4")
         shinyjs::enable("downloadCOD4")
         shinyjs::enable("downloadData4")
@@ -857,7 +891,11 @@ server <- function(input, output, session) {
           shinyjs::enable("downloadWarnings4")
         }
       }
-      if (input$byAge & length(child[child]) > 0) {
+      enableDownloads5 <- input$byAge & 
+        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+           (input$algorithm == "InSilicoVA" & length(child[child]) >= 100))
+      #if (input$byAge & length(child[child]) > 0) {
+      if (enableDownloads5) {
         shinyjs::enable("downloadPlot5")
         shinyjs::enable("downloadCOD5")
         shinyjs::enable("downloadData5")
@@ -865,7 +903,11 @@ server <- function(input, output, session) {
           shinyjs::enable("downloadWarnings5")
         }
       }
-      if (input$byAge & length(adult[adult]) > 0) {
+      enableDownloads6 <- input$byAge & 
+        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+           (input$algorithm == "InSilicoVA" & length(adult[adult]) >= 100))
+      #if (input$byAge & length(adult[adult]) > 0) {
+      if (enableDownloads6) {
         shinyjs::enable("downloadPlot6")
         shinyjs::enable("downloadCOD6")
         shinyjs::enable("downloadData6")
@@ -873,7 +915,11 @@ server <- function(input, output, session) {
           shinyjs::enable("downloadWarnings6")
         }
       }
-      if (input$byAgeSex & length(mNeonate[mNeonate]) > 0) {
+      enableDownloads7 <- input$byAgeSex & 
+        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+           (input$algorithm == "InSilicoVA" & length(mNeonate[mNeonate]) >= 100))
+      #if (input$byAgeSex & length(mNeonate[mNeonate]) > 0) {
+      if (enableDownloads7) {
         shinyjs::enable("downloadPlot7")
         shinyjs::enable("downloadCOD7")
         shinyjs::enable("downloadData7")
@@ -881,7 +927,11 @@ server <- function(input, output, session) {
           shinyjs::enable("downloadWarnings7")
         }
       }
-      if (input$byAgeSex & length(mChild[mChild]) > 0) {
+      enableDownloads8 <- input$byAgeSex & 
+        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+           (input$algorithm == "InSilicoVA" & length(mChild[mChild]) >= 100))
+      #if (input$byAgeSex & length(mChild[mChild]) > 0) {
+      if (enableDownloads8) {
         shinyjs::enable("downloadPlot8")
         shinyjs::enable("downloadCOD8")
         shinyjs::enable("downloadData8")
@@ -889,7 +939,11 @@ server <- function(input, output, session) {
           shinyjs::enable("downloadWarnings8")
         }
       }
-      if (input$byAgeSex & length(mAdult[mAdult]) > 0) {
+      enableDownloads9 <- input$byAgeSex & 
+        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+           (input$algorithm == "InSilicoVA" & length(mAdult[mAdult]) >= 100))
+      #if (input$byAgeSex & length(mAdult[mAdult]) > 0) {
+      if (enableDownloads9) {
         shinyjs::enable("downloadPlot9")
         shinyjs::enable("downloadCOD9")
         shinyjs::enable("downloadData9")
@@ -897,7 +951,11 @@ server <- function(input, output, session) {
           shinyjs::enable("downloadWarnings9")
         }
       }
-      if (input$byAgeSex & length(fNeonate[fNeonate]) > 0) {
+      enableDownloads10 <- input$byAgeSex & 
+        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+           (input$algorithm == "InSilicoVA" & length(fNeonate[fNeonate]) >= 100))
+      #if (input$byAgeSex & length(fNeonate[fNeonate]) > 0) {
+      if (enableDownloads10) {
         shinyjs::enable("downloadPlot10")
         shinyjs::enable("downloadCOD10")
         shinyjs::enable("downloadData10")
@@ -905,7 +963,11 @@ server <- function(input, output, session) {
           shinyjs::enable("downloadWarnings10")
         }
       }
-      if (input$byAgeSex & length(fChild[fChild]) > 0) {
+      enableDownloads11 <- input$byAgeSex & 
+        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+           (input$algorithm == "InSilicoVA" & length(fChild[fChild]) >= 100))
+      #if (input$byAgeSex & length(fChild[fChild]) > 0) {
+      if (enableDownloads11) {
         shinyjs::enable("downloadPlot11")
         shinyjs::enable("downloadCOD11")
         shinyjs::enable("downloadData11")
@@ -913,7 +975,11 @@ server <- function(input, output, session) {
           shinyjs::enable("downloadWarnings11")
         }
       }
-      if (input$byAgeSex & length(fAdult[fAdult]) > 0) {
+      enableDownloads12 <- input$byAgeSex & 
+        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+           (input$algorithm == "InSilicoVA" & length(fAdult[fAdult]) >= 100))
+      #if (input$byAgeSex & length(fAdult[fAdult]) > 0) {
+      if (enableDownloads12) {
         shinyjs::enable("downloadPlot12")
         shinyjs::enable("downloadCOD12")
         shinyjs::enable("downloadData12")
