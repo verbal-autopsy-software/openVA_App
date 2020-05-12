@@ -218,7 +218,7 @@ server <- function(input, output, session) {
       if (input$algorithm == "InSilicoVA") {
         namesRuns <- namesRuns[includeRuns & nonZero & nGE100]
       }
-      if (input$algorithm == "InterVA") {
+      if (input$algorithm == "InterVA5") {
         namesRuns <- namesRuns[includeRuns & nonZero]
       }
     } else {
@@ -324,7 +324,6 @@ server <- function(input, output, session) {
           progress$set(message = "done with analyses", value = 5/6)
         }
         lapply(1:length(namesRuns), function (i) {
-
           tmpNameRun <- namesRuns[i]
           groupName <- gsub("^(.)", "\\U\\1", tmpNameRun, perl = TRUE)
           rvName <- paste0("fit", groupName)
@@ -433,13 +432,13 @@ server <- function(input, output, session) {
               }
             )
           }
-            if (is.null(rv[[rvName]])) {
-              titleSummary <- paste0("titleSummary", groupName)
-              output[[titleSummary]] <- renderText({
-                paste("No Summary for", groupName, "(not enough deaths for analysis)")
-              })
-            }
-          if(is.null(rv[[rvName]])) rv[[tmpNameRun]] <- NULL
+            # if (is.null(rv[[rvName]])) {
+            #   titleSummary <- paste0("titleSummary", groupName)
+            #   output[[titleSummary]] <- renderText({
+            #     paste("No Summary for", groupName, "(not enough deaths for analysis)")
+            #   })
+            # }
+          if (is.null(rv[[rvName]])) rv[[tmpNameRun]] <- NULL
         })
         lapply(1:length(namesAll), function (i) {
           tmpNameRun <- namesAll[i]
@@ -460,7 +459,7 @@ server <- function(input, output, session) {
               tmpNameRun <- namesRuns[i]
               groupName <- gsub("^(.)", "\\U\\1", tmpNameRun, perl = TRUE)
               rvName <- paste0("fit", groupName)
-              if (input$algorithm == "InSilicoVA" ) {
+              if (input$algorithm == "InSilicoVA") {
                 orderedCSMF <- summary(rv[[rvName]])$csmf.ordered[, 1]
               } else {
                 orderedCSMF <- summary(rv[[rvName]])$csmf.ordered[, 2]
@@ -468,7 +467,7 @@ server <- function(input, output, session) {
               newTop <- min(input$topDeaths, sum(orderedCSMF > 0))
               rvNameIndivCOD <- paste0("indivCOD", groupName)
               rvNameCSMFSummary <- paste0("csmfSummary", groupName)
-              if(!is.null(rv[[rvName]])){
+              if (!is.null(rv[[rvName]])) {
                 # individual COD
                 tmpFileName <- paste0("individual-causes-", namesRuns[i], "-", input$algorithm, "-", Sys.Date(), ".csv")
                 write.csv(rv[[rvNameIndivCOD]], file = tmpFileName, row.names = FALSE)
@@ -856,8 +855,9 @@ server <- function(input, output, session) {
         }
       }
       enableDownloads2 <- input$bySex & 
-        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
-        (input$algorithm == "InSilicoVA" & length(male[male]) >= 100))
+        (input$algorithm == "Tariff2" | 
+           (input$algorithm == "InterVA5" & length(male[male]) > 0) |
+           (input$algorithm == "InSilicoVA" & length(male[male]) >= 100))
       #if (input$bySex & length(male[male]) > 0) {
       if (enableDownloads2) {
         shinyjs::enable("downloadPlot2")
@@ -868,7 +868,8 @@ server <- function(input, output, session) {
         }
       }
       enableDownloads3 <- input$bySex & 
-        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+        (input$algorithm == "Tariff2" | 
+           (input$algorithm == "InterVA5" & length(female[female]) > 0) |
            (input$algorithm == "InSilicoVA" & length(female[female]) >= 100))
       #if (input$bySex & length(female[female]) > 0) {
       if (enableDownloads3) {
@@ -880,7 +881,8 @@ server <- function(input, output, session) {
         }
       }
       enableDownloads4 <- input$byAge & 
-        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+        (input$algorithm == "Tariff2" | 
+           (input$algorithm == "InterVA5" & length(neonate[neonate]) > 0) |
            (input$algorithm == "InSilicoVA" & length(neonate[neonate]) >= 100))
       #if (input$byAge & length(neonate[neonate]) > 0) {
       if (enableDownloads4) {
@@ -892,7 +894,8 @@ server <- function(input, output, session) {
         }
       }
       enableDownloads5 <- input$byAge & 
-        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+        (input$algorithm == "Tariff2" | 
+           (input$algorithm == "InterVA5" & length(child[child]) > 0) |
            (input$algorithm == "InSilicoVA" & length(child[child]) >= 100))
       #if (input$byAge & length(child[child]) > 0) {
       if (enableDownloads5) {
@@ -904,7 +907,8 @@ server <- function(input, output, session) {
         }
       }
       enableDownloads6 <- input$byAge & 
-        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+        (input$algorithm == "Tariff2" | 
+           (input$algorithm == "InterVA5" & length(adult[adult]) > 0) |
            (input$algorithm == "InSilicoVA" & length(adult[adult]) >= 100))
       #if (input$byAge & length(adult[adult]) > 0) {
       if (enableDownloads6) {
@@ -916,7 +920,8 @@ server <- function(input, output, session) {
         }
       }
       enableDownloads7 <- input$byAgeSex & 
-        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+        (input$algorithm == "Tariff2" | 
+           (input$algorithm == "InterVA5" & length(mNeonate[mNeonate]) > 0) |
            (input$algorithm == "InSilicoVA" & length(mNeonate[mNeonate]) >= 100))
       #if (input$byAgeSex & length(mNeonate[mNeonate]) > 0) {
       if (enableDownloads7) {
@@ -928,7 +933,8 @@ server <- function(input, output, session) {
         }
       }
       enableDownloads8 <- input$byAgeSex & 
-        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+        (input$algorithm == "Tariff2" | 
+           (input$algorithm == "InterVA5" & length(mChild[mChild]) > 0) |
            (input$algorithm == "InSilicoVA" & length(mChild[mChild]) >= 100))
       #if (input$byAgeSex & length(mChild[mChild]) > 0) {
       if (enableDownloads8) {
@@ -940,7 +946,8 @@ server <- function(input, output, session) {
         }
       }
       enableDownloads9 <- input$byAgeSex & 
-        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+        (input$algorithm == "Tariff2" | 
+           (input$algorithm == "InterVA5" & length(mAdult[mAdult]) > 0) |
            (input$algorithm == "InSilicoVA" & length(mAdult[mAdult]) >= 100))
       #if (input$byAgeSex & length(mAdult[mAdult]) > 0) {
       if (enableDownloads9) {
@@ -952,7 +959,8 @@ server <- function(input, output, session) {
         }
       }
       enableDownloads10 <- input$byAgeSex & 
-        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+        (input$algorithm == "Tariff2" | 
+           (input$algorithm == "InterVA5" & length(fNeonate[fNeonate]) > 0) | 
            (input$algorithm == "InSilicoVA" & length(fNeonate[fNeonate]) >= 100))
       #if (input$byAgeSex & length(fNeonate[fNeonate]) > 0) {
       if (enableDownloads10) {
@@ -964,7 +972,8 @@ server <- function(input, output, session) {
         }
       }
       enableDownloads11 <- input$byAgeSex & 
-        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+        (input$algorithm == "Tariff2" | 
+           (input$algorithm == "InterVA5" & length(fChild[fChild]) > 0) |
            (input$algorithm == "InSilicoVA" & length(fChild[fChild]) >= 100))
       #if (input$byAgeSex & length(fChild[fChild]) > 0) {
       if (enableDownloads11) {
@@ -976,7 +985,8 @@ server <- function(input, output, session) {
         }
       }
       enableDownloads12 <- input$byAgeSex & 
-        (input$algorithm == "Tariff2" | input$algorithm == "InterVA5" |
+        (input$algorithm == "Tariff2" | 
+           (input$algorithm == "InterVA5" & length(fAdult[fAdult]) > 0) |
            (input$algorithm == "InSilicoVA" & length(fAdult[fAdult]) >= 100))
       #if (input$byAgeSex & length(fAdult[fAdult]) > 0) {
       if (enableDownloads12) {
