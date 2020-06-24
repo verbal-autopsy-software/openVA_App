@@ -38,6 +38,9 @@ RUN R CMD javareconf
 RUN R -e "install.packages(c('glue', 'shinyjs', 'openVA'), repos='http://cran.rstudio.com/')"
 RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/InterVA5
 RUN R CMD INSTALL /home/shiny/GitHub/InterVA5/InterVA5_1.1.1.tar.gz
+RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/InSilicoVA
+#RUN Rscript -e "install.packages('/home/shiny/GitHub/InSilicoVA/InSilicoVA', repose = NULL, type = 'source')"
+RUN R CMD INSTALL /home/shiny/GitHub/InSilicoVA/InSilicoVA
 RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/openVA_App
 RUN R CMD INSTALL /home/shiny/GitHub/openVA_App/pkg
 
