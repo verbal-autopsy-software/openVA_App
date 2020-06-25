@@ -60,6 +60,12 @@ InSilicoVA depends on the **R** package rJava.  It is common to run into problem
   more information on setting Environment Variables in windows see: 
   [https://www.java.com/en/download/help/path.xml](https://www.java.com/en/download/help/path.xml).
 
+- Another error message on Windows complains about the inability to install the 32bit version of InSilico (i386),
+  even though you are using the 64-bit version.  A potential solution is to use the option that tells R not to
+  install the 32bit version:
+  ```r
+  install.packages("openVA", INSTALL_opts = "--no-multiarch")
+  ```
 
 ## Video Tutorials
 Installation Guide (Windows): https://youtu.be/C2EPOpTzJTk
