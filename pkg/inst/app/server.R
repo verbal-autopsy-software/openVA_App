@@ -216,7 +216,8 @@ server <- function(input, output, session) {
                   sum(fNeonate) >= 100, sum(fChild) >= 100, sum(fAdult) >= 100)
       nRuns <- sum(includeRuns & nonZero)
       if (input$algorithm == "InSilicoVA") {
-        namesRuns <- namesRuns[includeRuns & nonZero & nGE100]
+          #namesRuns <- namesRuns[includeRuns & nonZero & nGE100]
+          namesRuns <- namesRuns[includeRuns & nonZero]
       }
       if (input$algorithm == "InterVA5") {
         namesRuns <- namesRuns[includeRuns & nonZero]

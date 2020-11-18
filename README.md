@@ -20,7 +20,7 @@ After satisfying the dependencies, install and run the openVA app with the follo
 
 ```r
 install.packages(c("openVA", "shinyjs", "devtools"), dependencies = TRUE)
-devtools::install_github('verbal-autopys-software/openVA_App', subdir = 'pkg', INSTALL_opts=c('--no-multiarch'))
+devtools::install_github('verbal-autopsy-software/openVA_App', subdir = 'pkg', INSTALL_opts=c('--no-multiarch'))
 library(openVAapp)
 launchApp()
 ```
