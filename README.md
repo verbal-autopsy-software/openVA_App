@@ -34,7 +34,7 @@ the option you choose (e.g., 1: All, 2: CRAN packages only; 3: None).
 
 InSilicoVA depends on the **R** package rJava.  It is common to run into problems with loading rJava (and thus InSilicoVA).  
 
-- For linux and Macs, it may help to open a terminal run the command ```R CMD javareconf```, and then try loading InSilicoVA. 
+- For linux and Macs, it may help to open a terminal run the command ```R CMD javareconf```, and then try loading InSilicoVA.  You may need to run this command with root privileges (e.g., ```sudo R CMD javareconf```).  If the account does not have administrative privileges, then try ```R CMD javareconf -e```.
 
 - For Macs R.app will look for jdk-9.  If you are using a different version of Java (e.g., jdk-8 or jdk10) then you need to tell R.app where to look for your Java installation.  In the terminal, run the following command with **your computer-specific paths**
   ```bash
