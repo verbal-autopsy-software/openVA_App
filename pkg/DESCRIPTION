@@ -1,7 +1,7 @@
 Package: openVAapp
 Type: Package
 Title: R Shiny App for Analyzing Verbal Autopsy Data with openVA
-Version: 1.0.0
+Version: 1.1.0
 Authors@R: c(
   person("Eungang", "Choi", role = "aut"),
   person("Sam", "Clark", role = "aut"),

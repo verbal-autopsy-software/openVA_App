@@ -22,6 +22,7 @@ server <- function(input, output, session) {
       )
   })
   output$fileUploaded <- reactive({
+    updateSelectInput(session, "raw_data_id", choices = c("none", colnames(getData())))
     return(!is.null(getData()))
   })
   outputOptions(output, "fileUploaded", suspendWhenHidden = FALSE)

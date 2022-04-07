@@ -1,5 +1,5 @@
 # Install rocker
-FROM rocker/shiny:3.6.0
+FROM rocker/shiny:4.1.3
 
 # Install Ubuntu packages
 RUN apt-get update && apt-get install -y \
@@ -36,16 +36,16 @@ WORKDIR /home/shiny/GitHub/pyCrossVA
 RUN python3.7 setup.py install
 RUN R CMD javareconf
 RUN R -e "install.packages(c('glue', 'shinyjs', 'openVA'), repos='http://cran.rstudio.com/')"
-RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/InterVA5
-RUN R CMD INSTALL /home/shiny/GitHub/InterVA5/InterVA5_1.1.1.tar.gz
-RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/InSilicoVA
+#RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/InterVA5
+#RUN R CMD INSTALL /home/shiny/GitHub/InterVA5/InterVA5_1.1.1.tar.gz
+#RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/InSilicoVA
 #RUN Rscript -e "install.packages('/home/shiny/GitHub/InSilicoVA/InSilicoVA', repose = NULL, type = 'source')"
-RUN R CMD INSTALL /home/shiny/GitHub/InSilicoVA/InSilicoVA
+#RUN R CMD INSTALL /home/shiny/GitHub/InSilicoVA/InSilicoVA
 RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/openVA_App
 RUN R CMD INSTALL /home/shiny/GitHub/openVA_App/pkg
 
 # Set up SmartVA-Analyze
-RUN wget -P /opt/SmartVA https://github.com/ihmeuw/SmartVA-Analyze/releases/download/v2.0.0/smartva
+RUN wget -P /opt/SmartVA https://github.com/ihmeuw/SmartVA-Analyze/releases/download/v2.1.0/smartva
 RUN chmod 755 /opt/SmartVA/smartva
 ENV PATH="/opt/SmartVA:${PATH}"
 

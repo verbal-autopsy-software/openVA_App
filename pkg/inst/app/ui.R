@@ -23,6 +23,8 @@ ui <- fluidPage(
                 "Upload your own data here (CSV file)",
                 multiple = FALSE,
                 accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
+      #varSelectInput("va_id", "Select Column with ID:"),
+      selectInput("raw_data_id", "Select Column with ID:", choices=c()),
       h3("Choose your preferences"),
       br(),
       checkboxInput("byAll", "Include an analysis of all records?", TRUE),
