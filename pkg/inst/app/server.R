@@ -525,7 +525,9 @@ server <- function(input, output, session) {
         dir.create("svaOut")
         if (file.exists("tmpOut.csv")) file.remove("tmpOut.csv")
         tmpOut <- getData()
-        tmpOut$sid <- tmpOut[input$raw_data_id]
+        if (input$raw_data_id != "none") {
+          tmpOut$sid <- tmpOut[.input$raw_data_id]
+        }
         names(tmpOut) <- gsub("\\.", ":", names(tmpOut))
         write.csv(tmpOut, file = "tmpOut.csv", na = "", row.names = FALSE)
         svaCall <- paste("smartva", "--country", input$svaCountry,
