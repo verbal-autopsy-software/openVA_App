@@ -526,7 +526,7 @@ server <- function(input, output, session) {
         if (file.exists("tmpOut.csv")) file.remove("tmpOut.csv")
         tmpOut <- getData()
         if (input$raw_data_id != "none") {
-          tmpOut$sid <- tmpOut[.input$raw_data_id]
+          tmpOut$sid <- getData()[.input$raw_data_id]
         }
         names(tmpOut) <- gsub("\\.", ":", names(tmpOut))
         write.csv(tmpOut, file = "tmpOut.csv", na = "", row.names = FALSE)
