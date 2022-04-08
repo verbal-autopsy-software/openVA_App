@@ -166,7 +166,7 @@ server <- function(input, output, session) {
       } else {
         pyCall <- paste0("/usr/local/bin/pycrossva-transform AUTODETECT ",
                          "InterVA5 tmpOut.csv --column_id ", 
-                         gsub("\\.", "-", input$raw_data_id),
+                         input$raw_data_id,
                          " --dst pyOut.csv")
       }
       
@@ -225,8 +225,14 @@ server <- function(input, output, session) {
                   sum(fNeonate) >= 100, sum(fChild) >= 100, sum(fAdult) >= 100)
       nRuns <- sum(includeRuns & nonZero)
       if (input$algorithm == "InSilicoVA") {
-          namesRuns <- namesRuns[includeRuns & nonZero & nGE100]
-          #namesRuns <- namesRuns[includeRuns & nonZero]
+          #namesRuns <- namesRuns[includeRuns & nonZero & nGE100]
+          namesRuns <- namesRuns[includeRuns & nonZero]
+          if (sum(nGE100[includeRuns & nonZero]) < nRuns) {
+            msg <- paste0("Some of the demographic groups (for which you have requested results) ",
+                          "have fewer than 100 deaths.  Please note it is recommended to use at ",
+                          "least 100 deaths when using the InSilicoVA algorithm")
+            showNotification(msg, duration = NULL, type = "warning")
+          }
       }
       if (input$algorithm == "InterVA5") {
         namesRuns <- namesRuns[includeRuns & nonZero]

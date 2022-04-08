@@ -14,8 +14,10 @@ the GUI located in [releases](https://github.com/verbal-autopsy-software/openVA_
 ## Non-Docker Usage
 
 The dependencies for the openVA app include R, Java, Python (version >=3.6 *and* version 2.7 if you wish to run the 
-Tariff2 algorithm), and [pyCrossVA](https://github.com/verbal-autopsy-software/pyCrossVA/tree/openVA_App) (*you will need the version
-from the openVA_App branch*).  If you wish to run the Tariff2 algorithm, [SmartVA-Analyze](https://github.com/ihmeuw/SmartVA-Analyze/releases) (command line version) must also be installed []()
+Tariff2 algorithm), and [pyCrossVA](https://github.com/verbal-autopsy-software/pyCrossVA).  The `pycrossva-transform`
+script must be located (or linked) to the directory `/usr/local/bin`).  If you wish to run the Tariff2 algorithm, 
+[SmartVA-Analyze](https://github.com/ihmeuw/SmartVA-Analyze/releases) (command line version) must also be installed 
+(and it must be in your path).
 
 After satisfying the dependencies, install and run the openVA app with the following commands in R:
 
