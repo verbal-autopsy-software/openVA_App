@@ -165,7 +165,8 @@ server <- function(input, output, session) {
                          "InterVA5 tmpOut.csv --dst pyOut.csv")
       } else {
         pyCall <- paste0("/usr/local/bin/pycrossva-transform AUTODETECT ",
-                         "InterVA5 tmpOut.csv --column_id ", input$raw_data_id,
+                         "InterVA5 tmpOut.csv --column_id ", 
+                         gsub("\\.", "-", input$raw_data_id),
                          " --dst pyOut.csv")
       }
       

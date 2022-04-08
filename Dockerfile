@@ -35,12 +35,17 @@ RUN pip3.7 install -r /home/shiny/GitHub/pyCrossVA/requirements.txt
 WORKDIR /home/shiny/GitHub/pyCrossVA
 RUN python3.7 setup.py install
 RUN R CMD javareconf
-RUN R -e "install.packages(c('glue', 'shinyjs', 'openVA'), repos='http://cran.rstudio.com/')"
-#RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/InterVA5
-#RUN R CMD INSTALL /home/shiny/GitHub/InterVA5/InterVA5_1.1.1.tar.gz
-#RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/InSilicoVA
-#RUN Rscript -e "install.packages('/home/shiny/GitHub/InSilicoVA/InSilicoVA', repose = NULL, type = 'source')"
-#RUN R CMD INSTALL /home/shiny/GitHub/InSilicoVA/InSilicoVA
+##RUN R -e "install.packages(c('glue', 'shinyjs', 'openVA'), repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages(c('glue', 'shinyjs'), repos='http://cran.rstudio.com/')"
+RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/InterVA5
+RUN R CMD INSTALL /home/shiny/GitHub/InterVA5/InterVA5_1.0
+
+RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/InSilicoVA
+RUN R CMD INSTALL /home/shiny/GitHub/InSilicoVA/InSilicoVA
+
+RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/openVA
+RUN R CMD INSTALL /home/shiny/GitHub/openVA
+
 RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/openVA_App
 RUN R CMD INSTALL /home/shiny/GitHub/openVA_App/pkg
 
