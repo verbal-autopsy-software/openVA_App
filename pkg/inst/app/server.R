@@ -160,8 +160,15 @@ server <- function(input, output, session) {
       ## records$ID <- getData()$meta.instanceID
       write.csv(getData(), file = 'tmpOut.csv', row.names = FALSE)
       pyAlg <- ifelse(input$algorithm == "InSilicoVA", "InsillicoVA", "InterVA5")
-      pyCall <- paste0("/usr/local/bin/pycrossva-transform AUTODETECT ",
-                       "InterVA5 tmpOut.csv --dst pyOut.csv")
+      if (input$raw_data_id == "none") {
+        pyCall <- paste0("/usr/local/bin/pycrossva-transform AUTODETECT ",
+                         "InterVA5 tmpOut.csv --dst pyOut.csv")
+      } else {
+        pyCall <- paste0("/usr/local/bin/pycrossva-transform AUTODETECT ",
+                         "InterVA5 tmpOut.csv --column_id ", input$raw_data_id,
+                         " --dst pyOut.csv")
+      }
+      
       pyCallStdout <- system(pyCall, intern = TRUE)
       records <- read.csv("pyOut.csv", stringsAsFactors = FALSE)
       nCells <- nrow(records[,-1]) * ncol(records[,-1])
@@ -217,8 +224,8 @@ server <- function(input, output, session) {
                   sum(fNeonate) >= 100, sum(fChild) >= 100, sum(fAdult) >= 100)
       nRuns <- sum(includeRuns & nonZero)
       if (input$algorithm == "InSilicoVA") {
-          #namesRuns <- namesRuns[includeRuns & nonZero & nGE100]
-          namesRuns <- namesRuns[includeRuns & nonZero]
+          namesRuns <- namesRuns[includeRuns & nonZero & nGE100]
+          #namesRuns <- namesRuns[includeRuns & nonZero]
       }
       if (input$algorithm == "InterVA5") {
         namesRuns <- namesRuns[includeRuns & nonZero]
@@ -296,7 +303,8 @@ server <- function(input, output, session) {
                         mNeonate = NULL, mChild = NULL, mAdult = NULL,
                         fNeonate = NULL, fChild = NULL, fAdult = NULL)
           parallel::clusterExport(cl,
-                                  varlist = c("namesRuns", "tmpDirResults", "modelArgs", "seeds",
+                                  varlist = c("namesRuns", "tmpDirResults", 
+                                              "modelArgs", "seeds",
                                               "records", "all", "male", "female",
                                               "neonate", "child", "adult",
                                               "mNeonate", "mChild", "mAdult",
@@ -349,7 +357,8 @@ server <- function(input, output, session) {
           # produce outputs
           if (!is.null(rv[[rvName]])) {
             rvNameIndivCOD <- paste0("indivCOD", groupName)            
-            rv[[rvNameIndivCOD]] <- indivCOD(rv[[rvName]], top = 3)
+            #rv[[rvNameIndivCOD]] <- indivCOD(rv[[rvName]], top = 3)
+            rv[[rvNameIndivCOD]] <- openVA::getTopCOD(rv[[rvName]], n = 3, include.prob = TRUE)
             
             if (input$algorithm == "InSilicoVA" ) {
               orderedCSMF <- summary(rv[[rvName]])$csmf.ordered[, 1]
@@ -372,8 +381,8 @@ server <- function(input, output, session) {
             # CSMF Plot
             plotName <- paste0("plot-", tmpNameRun, "-", input$algorithm, "-", Sys.Date(), ".pdf")
             if (file.exists(plotName)) file.remove(plotName)
-            plotVA(rv[[rvName]], top = newTop)
-            ggsave(plotName, device="pdf")
+            openVA::plotVA(rv[[rvName]], top = newTop)
+            ggplot2::ggsave(plotName, device="pdf")
             downloadPlot <- paste0("downloadPlot", namesNumericCodes[tmpNameRun])
             output[[downloadPlot]] <- downloadHandler(
               filename = plotName,
@@ -390,7 +399,7 @@ server <- function(input, output, session) {
             plotGrp <- paste0("plot", groupName)
             output[[plotGrp]] <- renderPlot({
               if (!is.null(rv[[rvName]])) {
-                plotVA(rv[[rvName]], top = newTop)
+                openVA::plotVA(rv[[rvName]], top = newTop)
               }
             })
             # Download individual cause assignments
@@ -481,8 +490,8 @@ server <- function(input, output, session) {
                 # plot
                 tmpFileName <- paste0("plot-", tmpNameRun, "-", input$algorithm, "-", Sys.Date(), ".pdf")
                 if (file.exists(tmpFileName)) file.remove(tmpFileName)
-                plotVA(rv[[rvName]], top = newTop)
-                ggsave(tmpFileName, device="pdf")
+                openVA::plotVA(rv[[rvName]], top = newTop)
+                ggplot2::ggsave(tmpFileName, device="pdf")
                 files <- c(files, tmpFileName)
                 # warnings
                 tmpFileName <- paste0(input$algorithm, "-warnings-", namesRuns[i], ".txt")
@@ -700,7 +709,7 @@ server <- function(input, output, session) {
             g <- g + ggplot2::coord_flip() +
               ggplot2::scale_fill_grey(start = 0.8, end = 0.2) +
               ggplot2::theme(legend.position = "none")
-            ggsave(plotName, device="pdf")
+            ggplot2::ggsave(plotName, device="pdf")
             par(mar = marOld)
             downloadPlot <- paste0("downloadPlot", namesNumericCodes[tmpNameRun])
             output[[downloadPlot]] <- downloadHandler(
@@ -794,7 +803,7 @@ server <- function(input, output, session) {
                 g <- g + ggplot2::coord_flip() +
                   ggplot2::scale_fill_grey(start = 0.8, end = 0.2) +
                   ggplot2::theme(legend.position = "none")
-                ggsave(tmpFileName, device="pdf")
+                ggplot2::ggsave(tmpFileName, device="pdf")
                 par(mar = marOld)
                 files <- c(files, tmpFileName)
               }
