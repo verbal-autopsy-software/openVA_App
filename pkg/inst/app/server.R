@@ -31,13 +31,11 @@ server <- function(input, output, session) {
            "InSilicoVA" = 1, "InterVA5" = 2, "Tariff2" = 3)
   })
   sva_data <- reactive({
-    #updateSelectInput(session, "raw_data_id", choices = c("none", colnames(getData())))
     sva_getData <- getData()
     if (input$raw_data_id != "none" & input$algorithm == "Tariff2") {
       sva_getData$sid <- sva_getData[, input$raw_data_id]
-      names(sva_getData) <- gsub("\\.", ":", names(sva_getData))
-      #write.csv(sva_getData, file = "tmpOut.csv", na = "", row.names = FALSE)
     }
+    names(sva_getData) <- gsub("\\.", ":", names(sva_getData))
     return(sva_getData)
   })
  
