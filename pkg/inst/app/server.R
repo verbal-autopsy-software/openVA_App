@@ -30,7 +30,17 @@ server <- function(input, output, session) {
     switch(input$algorithm,
            "InSilicoVA" = 1, "InterVA5" = 2, "Tariff2" = 3)
   })
-
+  sva_data <- reactive({
+    #updateSelectInput(session, "raw_data_id", choices = c("none", colnames(getData())))
+    sva_getData <- getData()
+    if (input$raw_data_id != "none" & input$algorithm == "Tariff2") {
+      sva_getData$sid <- sva_getData[, input$raw_data_id]
+      names(sva_getData) <- gsub("\\.", ":", names(sva_getData))
+      #write.csv(sva_getData, file = "tmpOut.csv", na = "", row.names = FALSE)
+    }
+    return(sva_getData)
+  })
+ 
   ## Run model
   rv <- reactiveValues()
   rv$male     <- TRUE
@@ -155,6 +165,13 @@ server <- function(input, output, session) {
     pyCallStdout <- ""
     badData <- 0
     badConversion <- FALSE
+    if (input$algorithm == "Tariff2") {
+      file.remove(grep("plot-.*-Tariff2", dir(), value = TRUE))
+      if (dir.exists("svaOut")) unlink("svaOut", recursive = TRUE, force = TRUE)
+      dir.create("svaOut")
+      if (file.exists("tmpOut.csv")) file.remove("tmpOut.csv")
+      write.csv(sva_data(), file = "tmpOut.csv", na = "", row.names = FALSE)
+    }
     if (input$odkBC & input$algorithm != "Tariff2") {
       ## records <- CrossVA::odk2openVA(getData())
       ## records$ID <- getData()$meta.instanceID
@@ -520,16 +537,18 @@ server <- function(input, output, session) {
       # Tariff2
       if (input$algorithm == "Tariff2") {
 
-        file.remove(grep("plot-.*-Tariff2", dir(), value = TRUE))
-        if (dir.exists("svaOut")) unlink("svaOut", recursive = TRUE, force = TRUE)
-        dir.create("svaOut")
-        if (file.exists("tmpOut.csv")) file.remove("tmpOut.csv")
-        tmpOut <- getData()
-        if (input$raw_data_id != "none") {
-          tmpOut$sid <- getData()[.input$raw_data_id]
-        }
-        names(tmpOut) <- gsub("\\.", ":", names(tmpOut))
-        write.csv(tmpOut, file = "tmpOut.csv", na = "", row.names = FALSE)
+        # file.remove(grep("plot-.*-Tariff2", dir(), value = TRUE))
+        # if (dir.exists("svaOut")) unlink("svaOut", recursive = TRUE, force = TRUE)
+        # dir.create("svaOut")
+        # if (file.exists("tmpOut.csv")) file.remove("tmpOut.csv")
+        #tmpOut <- getData()
+        #if (input$raw_data_id != "none") {
+          #tmpOut$sid <- getData()$raw_data_id
+          #tmpOut$sid <- tmpOut$meta.instanceID
+        #}
+        #names(tmpOut) <- gsub("\\.", ":", names(tmpOut))
+        #write.csv(tmpOut, file = "tmpOut.csv", na = "", row.names = FALSE)
+        # write.csv(sva_data(), file = "tmpOut.csv", na = "", row.names = FALSE)
         svaCall <- paste("smartva", "--country", input$svaCountry,
                          "--hiv", ifelse(input$svaHIV, "True", "False"),
                          "--malaria", ifelse(input$svaMalaria, "True", "False"),

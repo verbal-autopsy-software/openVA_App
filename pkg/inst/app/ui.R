@@ -23,7 +23,6 @@ ui <- fluidPage(
                 "Upload your own data here (CSV file)",
                 multiple = FALSE,
                 accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
-      #varSelectInput("va_id", "Select Column with ID:"),
       selectInput("raw_data_id", "Select Column with ID:", choices=c()),
       h3("Choose your preferences"),
       br(),
@@ -65,7 +64,7 @@ ui <- fluidPage(
       h4("Data format"),
       checkboxInput("odkBC", "Are the data from an ODKBriefcase export?", TRUE),
 
-      conditionalPanel("output.fileUploaded", actionButton("processMe", "Analyze my data!"))
+        conditionalPanel("output.fileUploaded", actionButton("processMe", "Analyze my data!"))
     ),
     ## Outputs
     mainPanel(
