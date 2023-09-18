@@ -22,26 +22,17 @@ RUN apt-get update && apt-get install -y \
 
 # Install R packages that are required
 WORKDIR /opt
-RUN wget https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz
-RUN tar -xf Python-3.7.5.tgz
-WORKDIR Python-3.7.5
+RUN wget https://www.python.org/ftp/python/3.11.5/Python-3.11.5.tgz
+RUN tar -xf Python-3.11.5.tgz
+WORKDIR Python-3.11.5
 RUN ./configure --enable-optimizations --enable-shared
 RUN sudo make altinstall
 RUN mkdir /home/shiny/GitHub
-RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/pyCrossVA
 RUN sudo ldconfig /usr/local/lib
-RUN pip3.7 install pip setuptools wheel --upgrade
-RUN pip3.7 install -r /home/shiny/GitHub/pyCrossVA/requirements.txt
-WORKDIR /home/shiny/GitHub/pyCrossVA
-RUN python3.7 setup.py install
+RUN pip3.11 install pip setuptools wheel --upgrade
+RUN pip3.11 install pycrossva
 RUN R CMD javareconf
 RUN R -e "install.packages(c('glue', 'shinyjs', 'openVA'), repos='http://cran.rstudio.com/')"
-RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/InterVA5
-RUN R CMD INSTALL /home/shiny/GitHub/InterVA5/InterVA5_1.0
-RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/InSilicoVA
-RUN R CMD INSTALL /home/shiny/GitHub/InSilicoVA/InSilicoVA
-RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/openVA
-RUN R CMD INSTALL /home/shiny/GitHub/openVA
 RUN git -C /home/shiny/GitHub/ clone https://github.com/verbal-autopsy-software/openVA_App
 RUN R CMD INSTALL /home/shiny/GitHub/openVA_App/pkg
 
